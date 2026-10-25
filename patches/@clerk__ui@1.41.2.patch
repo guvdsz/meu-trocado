@@ -1,0 +1,24 @@
+diff --git a/dist/components/SignIn/SignInFactorOnePasswordCard.js b/dist/components/SignIn/SignInFactorOnePasswordCard.js
+--- a/dist/components/SignIn/SignInFactorOnePasswordCard.js
++++ b/dist/components/SignIn/SignInFactorOnePasswordCard.js
+@@ -58,7 +58,7 @@
+ 	};
+ 	const handlePasswordSubmit = (e) => {
+ 		e.preventDefault();
+-		signIn.attemptFirstFactor({
++		return signIn.attemptFirstFactor({
+ 			strategy: "password",
+ 			password: passwordControl.value
+ 		}).then((res) => {
+diff --git a/dist/no-rhc/components/SignIn/SignInFactorOnePasswordCard.js b/dist/no-rhc/components/SignIn/SignInFactorOnePasswordCard.js
+--- a/dist/no-rhc/components/SignIn/SignInFactorOnePasswordCard.js
++++ b/dist/no-rhc/components/SignIn/SignInFactorOnePasswordCard.js
+@@ -58,7 +58,7 @@
+ 	};
+ 	const handlePasswordSubmit = (e) => {
+ 		e.preventDefault();
+-		signIn.attemptFirstFactor({
++		return signIn.attemptFirstFactor({
+ 			strategy: "password",
+ 			password: passwordControl.value
+ 		}).then((res) => {

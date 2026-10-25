@@ -45,7 +45,9 @@ As consultas usam o query builder do Drizzle e as tabelas tipadas de `src/db/sch
 
 Lançamentos e ajustes executam a alteração do saldo e o registro do histórico na mesma transação. Recorrências travam a carteira antes de gerar cobranças, editar ou encerrar regras. Permanecem as verificações de proprietário, versão e unicidade por operação/recorrência. Dashboard e histórico usam transações de leitura com isolamento `repeatable read`, para que suas consultas compartilhem a mesma visão dos dados.
 
-O driver é `drizzle-orm/neon-serverless`, com conexões WebSocket abertas e encerradas em cada chamada a `withDatabase`. Isso permite transações com etapas dependentes, não suportadas pelo antigo driver `neon-http`. Use **Node.js 22 ou superior** localmente e na Vercel para ter WebSocket nativo; `DATABASE_URL` permanece a mesma. [Documentação do driver Neon](https://neon.com/docs/serverless/serverless-driver).
+O driver é `drizzle-orm/neon-serverless`, com conexões WebSocket abertas e encerradas em cada chamada a `withDatabase`. Isso permite transações com etapas dependentes, não suportadas pelo antigo driver `neon-http`. Use **Node.js 24.x** localmente e na Vercel, conforme `engines.node` no `package.json`; `DATABASE_URL` permanece a mesma. [Documentação do driver Neon](https://neon.com/docs/serverless/serverless-driver).
+
+O pnpm aplica uma correção de carregamento do Clerk na instalação. A pasta `patches/` precisa acompanhar `pnpm-workspace.yaml` e `pnpm-lock.yaml` no Git e no deploy. Consulte [patches/README.md](patches/README.md).
 
 ## Instalar o aplicativo
 
