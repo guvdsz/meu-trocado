@@ -1,5 +1,7 @@
+import { PreferencesProvider } from "@/app/(private)/_components/preferences-context";
+import { getPreferences } from "@/db/queries/settings";
 import { Suspense } from "react";
-import { requireGoogleIdentity, IdentityError } from "@/lib/auth";
+import { requireUser, IdentityError } from "@/lib/auth";
 import { localToday, resolveMonth } from "@/lib/financial";
 import { getDashboard } from "@/db/queries/dashboard";
 import { Dashboard } from "./_components/dashboard";
@@ -14,12 +16,14 @@ async function DashboardContent({
 }) {
   // The current day must be computed for this request, outside the static shell.
   await connection();
+  const preferences = await getPreferences();
+  if (!preferences.configured) return null;
   const params = await searchParams;
-  const today = localToday();
+  const today = localToday(new Date(), preferences.timeZone);
   const month = resolveMonth(params.month, today);
   const result = await (async () => {
     try {
-      const identity = await requireGoogleIdentity();
+      const identity = await requireUser();
       const data = await getDashboard(identity, month);
       return { identity, data };
     } catch (error) {
@@ -28,18 +32,18 @@ async function DashboardContent({
   })();
   if ("data" in result && result.data && result.identity)
     return (
-      <Dashboard
+      <PreferencesProvider preferences={result.data.account}><Dashboard
         data={result.data}
         name={result.identity.name}
         today={today}
         month={month}
-      />
+      /></PreferencesProvider>
     );
   return (
     <UnavailableState
       title={
         result.message
-          ? "Verifique sua conta Google"
+          ? "Verifique seu acesso"
           : "Não foi possível carregar seu resumo"
       }
       description={result.message ?? undefined}

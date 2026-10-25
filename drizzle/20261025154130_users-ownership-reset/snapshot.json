@@ -1,0 +1,919 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "07563837-98c4-4b39-92b6-a54e43d9d4d1",
+  "prevIds": [
+    "558016b0-9d44-4fde-a02e-417c4bc50da8"
+  ],
+  "footprints": [
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "users"
+      ],
+      "writes": [
+        "s|tbl|public.users",
+        "n|tbl|public.users",
+        "e|tbl|public.users",
+        "n|rel|public.users",
+        "n|type|public.users",
+        "n|rel|public.users_pkey",
+        "n|rel|public.users_provider_id_key"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "drop_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "balance_adjustments"
+      ],
+      "writes": [
+        "s|fk|public.balance_adjustments.balance_adjustments_account_google_owner_fk",
+        "n|fk|public.balance_adjustments.balance_adjustments_account_google_owner_fk",
+        "e|fk|public.balance_adjustments.balance_adjustments_account_google_owner_fk",
+        "n|con|public.balance_adjustments.balance_adjustments_account_google_owner_fk"
+      ],
+      "reads": [
+        "n|tbl|public.balance_adjustments",
+        "n|sch|public",
+        "e|col|public.balance_adjustments.account_id",
+        "e|col|public.balance_adjustments.google_id"
+      ]
+    },
+    {
+      "statementType": "drop_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "transactions"
+      ],
+      "writes": [
+        "s|fk|public.transactions.transactions_account_google_owner_fk",
+        "n|fk|public.transactions.transactions_account_google_owner_fk",
+        "e|fk|public.transactions.transactions_account_google_owner_fk",
+        "n|con|public.transactions.transactions_account_google_owner_fk"
+      ],
+      "reads": [
+        "n|tbl|public.transactions",
+        "n|sch|public",
+        "e|col|public.transactions.account_id",
+        "e|col|public.transactions.google_id"
+      ]
+    },
+    {
+      "statementType": "drop_unique",
+      "statementTarget": [
+        "table",
+        "public",
+        "accounts"
+      ],
+      "writes": [
+        "s|uq|public.accounts.accounts_clerk_user_id_key",
+        "n|uq|public.accounts.accounts_clerk_user_id_key",
+        "e|uq|public.accounts.accounts_clerk_user_id_key",
+        "n|con|public.accounts.accounts_clerk_user_id_key",
+        "n|rel|public.accounts_clerk_user_id_key"
+      ],
+      "reads": [
+        "n|tbl|public.accounts",
+        "n|sch|public",
+        "e|col|public.accounts.clerk_user_id"
+      ],
+      "sharedWrites": [
+        "e|uniqueness|public.accounts.clerk_user_id"
+      ]
+    },
+    {
+      "statementType": "drop_unique",
+      "statementTarget": [
+        "table",
+        "public",
+        "accounts"
+      ],
+      "writes": [
+        "s|uq|public.accounts.accounts_id_google_id_unique",
+        "n|uq|public.accounts.accounts_id_google_id_unique",
+        "e|uq|public.accounts.accounts_id_google_id_unique",
+        "n|con|public.accounts.accounts_id_google_id_unique",
+        "n|rel|public.accounts_id_google_id_unique"
+      ],
+      "reads": [
+        "n|tbl|public.accounts",
+        "n|sch|public",
+        "e|col|public.accounts.id",
+        "e|col|public.accounts.google_id"
+      ],
+      "sharedWrites": [
+        "e|uniqueness|public.accounts.google_id.id"
+      ]
+    },
+    {
+      "statementType": "drop_unique",
+      "statementTarget": [
+        "table",
+        "public",
+        "accounts"
+      ],
+      "writes": [
+        "s|uq|public.accounts.accounts_google_id_key",
+        "n|uq|public.accounts.accounts_google_id_key",
+        "e|uq|public.accounts.accounts_google_id_key",
+        "n|con|public.accounts.accounts_google_id_key",
+        "n|rel|public.accounts_google_id_key"
+      ],
+      "reads": [
+        "n|tbl|public.accounts",
+        "n|sch|public",
+        "e|col|public.accounts.google_id"
+      ],
+      "sharedWrites": [
+        "e|uniqueness|public.accounts.google_id"
+      ]
+    },
+    {
+      "statementType": "drop_check",
+      "statementTarget": [
+        "table",
+        "public",
+        "accounts"
+      ],
+      "writes": [
+        "s|ck|public.accounts.accounts_owner_not_empty",
+        "n|ck|public.accounts.accounts_owner_not_empty",
+        "e|ck|public.accounts.accounts_owner_not_empty",
+        "n|con|public.accounts.accounts_owner_not_empty"
+      ],
+      "reads": [
+        "n|tbl|public.accounts",
+        "n|sch|public",
+        "e|col|public.accounts.clerk_user_id"
+      ]
+    },
+    {
+      "statementType": "drop_check",
+      "statementTarget": [
+        "table",
+        "public",
+        "accounts"
+      ],
+      "writes": [
+        "s|ck|public.accounts.accounts_google_id_not_empty",
+        "n|ck|public.accounts.accounts_google_id_not_empty",
+        "e|ck|public.accounts.accounts_google_id_not_empty",
+        "n|con|public.accounts.accounts_google_id_not_empty"
+      ],
+      "reads": [
+        "n|tbl|public.accounts",
+        "n|sch|public",
+        "e|col|public.accounts.google_id"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "accounts",
+        "user_id"
+      ],
+      "writes": [
+        "s|col|public.accounts.user_id",
+        "n|col|public.accounts.user_id",
+        "e|col|public.accounts.user_id"
+      ],
+      "reads": [
+        "n|tbl|public.accounts",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "balance_adjustments",
+        "user_id"
+      ],
+      "writes": [
+        "s|col|public.balance_adjustments.user_id",
+        "n|col|public.balance_adjustments.user_id",
+        "e|col|public.balance_adjustments.user_id"
+      ],
+      "reads": [
+        "n|tbl|public.balance_adjustments",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "recurring_expenses",
+        "user_id"
+      ],
+      "writes": [
+        "s|col|public.recurring_expenses.user_id",
+        "n|col|public.recurring_expenses.user_id",
+        "e|col|public.recurring_expenses.user_id"
+      ],
+      "reads": [
+        "n|tbl|public.recurring_expenses",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "transactions",
+        "user_id"
+      ],
+      "writes": [
+        "s|col|public.transactions.user_id",
+        "n|col|public.transactions.user_id",
+        "e|col|public.transactions.user_id"
+      ],
+      "reads": [
+        "n|tbl|public.transactions",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "drop_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "accounts",
+        "clerk_user_id"
+      ],
+      "writes": [
+        "s|col|public.accounts.clerk_user_id",
+        "n|col|public.accounts.clerk_user_id",
+        "e|col|public.accounts.clerk_user_id"
+      ],
+      "reads": [
+        "n|tbl|public.accounts",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "drop_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "accounts",
+        "google_id"
+      ],
+      "writes": [
+        "s|col|public.accounts.google_id",
+        "n|col|public.accounts.google_id",
+        "e|col|public.accounts.google_id"
+      ],
+      "reads": [
+        "n|tbl|public.accounts",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "drop_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "balance_adjustments",
+        "google_id"
+      ],
+      "writes": [
+        "s|col|public.balance_adjustments.google_id",
+        "n|col|public.balance_adjustments.google_id",
+        "e|col|public.balance_adjustments.google_id"
+      ],
+      "reads": [
+        "n|tbl|public.balance_adjustments",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "drop_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "recurring_expenses",
+        "google_id"
+      ],
+      "writes": [
+        "s|col|public.recurring_expenses.google_id",
+        "n|col|public.recurring_expenses.google_id",
+        "e|col|public.recurring_expenses.google_id"
+      ],
+      "reads": [
+        "n|tbl|public.recurring_expenses",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "drop_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "transactions",
+        "google_id"
+      ],
+      "writes": [
+        "s|col|public.transactions.google_id",
+        "n|col|public.transactions.google_id",
+        "e|col|public.transactions.google_id"
+      ],
+      "reads": [
+        "n|tbl|public.transactions",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_unique",
+      "statementTarget": [
+        "table",
+        "public",
+        "accounts"
+      ],
+      "writes": [
+        "s|uq|public.accounts.accounts_id_user_id_unique",
+        "n|uq|public.accounts.accounts_id_user_id_unique",
+        "e|uq|public.accounts.accounts_id_user_id_unique",
+        "n|con|public.accounts.accounts_id_user_id_unique",
+        "n|rel|public.accounts_id_user_id_unique"
+      ],
+      "reads": [
+        "n|tbl|public.accounts",
+        "n|sch|public",
+        "n|col|public.accounts.id",
+        "n|col|public.accounts.user_id"
+      ]
+    },
+    {
+      "statementType": "add_unique",
+      "statementTarget": [
+        "table",
+        "public",
+        "accounts"
+      ],
+      "writes": [
+        "s|uq|public.accounts.accounts_user_id_key",
+        "n|uq|public.accounts.accounts_user_id_key",
+        "e|uq|public.accounts.accounts_user_id_key",
+        "n|con|public.accounts.accounts_user_id_key",
+        "n|rel|public.accounts_user_id_key"
+      ],
+      "reads": [
+        "n|tbl|public.accounts",
+        "n|sch|public",
+        "n|col|public.accounts.user_id"
+      ]
+    },
+    {
+      "statementType": "alter_unique",
+      "statementTarget": [
+        "table",
+        "public",
+        "recurring_expenses"
+      ],
+      "writes": [
+        "s|uq|public.recurring_expenses.recurring_expenses_id_owner_unique"
+      ],
+      "reads": [
+        "n|tbl|public.recurring_expenses",
+        "n|sch|public",
+        "n|col|public.recurring_expenses.id",
+        "n|col|public.recurring_expenses.account_id",
+        "n|col|public.recurring_expenses.user_id",
+        "e|col|public.recurring_expenses.id",
+        "e|col|public.recurring_expenses.account_id",
+        "e|col|public.recurring_expenses.google_id"
+      ],
+      "sharedWrites": [
+        "e|uniqueness|public.recurring_expenses.account_id.google_id.id"
+      ],
+      "sqlHash": "896c788bbaf76430"
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "recurring_expenses",
+        "recurring_expenses_account_idx"
+      ],
+      "writes": [
+        "s|idx|public.recurring_expenses_account_idx",
+        "n|idx|public.recurring_expenses_account_idx",
+        "e|idx|public.recurring_expenses_account_idx",
+        "n|rel|public.recurring_expenses_account_idx"
+      ],
+      "reads": [
+        "n|tbl|public.recurring_expenses",
+        "n|sch|public",
+        "n|col|public.recurring_expenses.account_id",
+        "n|col|public.recurring_expenses.user_id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "accounts"
+      ],
+      "writes": [
+        "s|fk|public.accounts.accounts_user_id_users_id_fkey",
+        "n|fk|public.accounts.accounts_user_id_users_id_fkey",
+        "e|fk|public.accounts.accounts_user_id_users_id_fkey",
+        "n|con|public.accounts.accounts_user_id_users_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.accounts",
+        "n|sch|public",
+        "n|tbl|public.users",
+        "n|sch|public",
+        "n|col|public.accounts.user_id",
+        "n|col|public.users.id",
+        "e|uniqueness|public.users.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "balance_adjustments"
+      ],
+      "writes": [
+        "s|fk|public.balance_adjustments.balance_adjustments_account_user_owner_fk",
+        "n|fk|public.balance_adjustments.balance_adjustments_account_user_owner_fk",
+        "e|fk|public.balance_adjustments.balance_adjustments_account_user_owner_fk",
+        "n|con|public.balance_adjustments.balance_adjustments_account_user_owner_fk"
+      ],
+      "reads": [
+        "n|tbl|public.balance_adjustments",
+        "n|sch|public",
+        "n|tbl|public.accounts",
+        "n|sch|public",
+        "n|col|public.balance_adjustments.account_id",
+        "n|col|public.balance_adjustments.user_id",
+        "n|col|public.accounts.id",
+        "n|col|public.accounts.user_id",
+        "e|uniqueness|public.accounts.id.user_id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "transactions"
+      ],
+      "writes": [
+        "s|fk|public.transactions.transactions_account_user_owner_fk",
+        "n|fk|public.transactions.transactions_account_user_owner_fk",
+        "e|fk|public.transactions.transactions_account_user_owner_fk",
+        "n|con|public.transactions.transactions_account_user_owner_fk"
+      ],
+      "reads": [
+        "n|tbl|public.transactions",
+        "n|sch|public",
+        "n|tbl|public.accounts",
+        "n|sch|public",
+        "n|col|public.transactions.account_id",
+        "n|col|public.transactions.user_id",
+        "n|col|public.accounts.id",
+        "n|col|public.accounts.user_id",
+        "e|uniqueness|public.accounts.id.user_id"
+      ]
+    },
+    {
+      "statementType": "recreate_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "recurring_expenses"
+      ],
+      "writes": [
+        "s|fk|public.recurring_expenses.recurring_expenses_owner_fk",
+        "n|fk|public.recurring_expenses.recurring_expenses_owner_fk",
+        "e|fk|public.recurring_expenses.recurring_expenses_owner_fk",
+        "n|con|public.recurring_expenses.recurring_expenses_owner_fk"
+      ],
+      "reads": [
+        "n|tbl|public.recurring_expenses",
+        "n|sch|public",
+        "n|tbl|public.accounts",
+        "n|sch|public",
+        "n|col|public.recurring_expenses.account_id",
+        "n|col|public.recurring_expenses.user_id",
+        "n|col|public.accounts.id",
+        "n|col|public.accounts.user_id",
+        "e|uniqueness|public.accounts.id.user_id"
+      ],
+      "sqlHash": "2ddaa82b97825309"
+    },
+    {
+      "statementType": "recreate_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "transactions"
+      ],
+      "writes": [
+        "s|fk|public.transactions.transactions_recurrence_owner_fk",
+        "n|fk|public.transactions.transactions_recurrence_owner_fk",
+        "e|fk|public.transactions.transactions_recurrence_owner_fk",
+        "n|con|public.transactions.transactions_recurrence_owner_fk"
+      ],
+      "reads": [
+        "n|tbl|public.transactions",
+        "n|sch|public",
+        "n|tbl|public.recurring_expenses",
+        "n|sch|public",
+        "n|col|public.transactions.recurrence_id",
+        "n|col|public.transactions.account_id",
+        "n|col|public.transactions.user_id",
+        "n|col|public.recurring_expenses.id",
+        "n|col|public.recurring_expenses.account_id",
+        "n|col|public.recurring_expenses.user_id",
+        "e|uniqueness|public.recurring_expenses.account_id.id.user_id"
+      ],
+      "sqlHash": "b42c232ecf9b8f05"
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "users",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "accounts",
+        "name": "user_id",
+        "type": "uuid",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "balance_adjustments",
+        "name": "user_id",
+        "type": "uuid",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "recurring_expenses",
+        "name": "user_id",
+        "type": "uuid",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "transactions",
+        "name": "user_id",
+        "type": "uuid",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "users",
+        "name": "id",
+        "type": "uuid",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "gen_random_uuid()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "users",
+        "name": "provider_id",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "users",
+        "name": "created_at",
+        "type": "timestamp with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "accounts",
+        "name": "accounts_user_id_users_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "user_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "users",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "RESTRICT",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "balance_adjustments",
+        "name": "balance_adjustments_account_user_owner_fk",
+        "nameExplicit": true,
+        "columns": [
+          "account_id",
+          "user_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "accounts",
+        "columnsTo": [
+          "id",
+          "user_id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "RESTRICT",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "transactions",
+        "name": "transactions_account_user_owner_fk",
+        "nameExplicit": true,
+        "columns": [
+          "account_id",
+          "user_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "accounts",
+        "columnsTo": [
+          "id",
+          "user_id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "RESTRICT",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "users",
+        "name": "users_pkey",
+        "columns": [
+          "id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "accounts",
+        "name": "accounts_id_user_id_unique",
+        "nameExplicit": true,
+        "columns": [
+          "id",
+          "user_id"
+        ],
+        "nullsNotDistinct": false,
+        "entityType": "uniques"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "accounts",
+        "name": "accounts_user_id_key",
+        "nameExplicit": false,
+        "columns": [
+          "user_id"
+        ],
+        "nullsNotDistinct": false,
+        "entityType": "uniques"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "users",
+        "name": "users_provider_id_key",
+        "nameExplicit": false,
+        "columns": [
+          "provider_id"
+        ],
+        "nullsNotDistinct": false,
+        "entityType": "uniques"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "users",
+        "name": "users_provider_id_not_empty",
+        "value": "length(btrim(\"provider_id\")) > 0",
+        "entityType": "checks"
+      }
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"accounts\",\"clerk_user_id\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"accounts\",\"google_id\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"balance_adjustments\",\"google_id\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"transactions\",\"google_id\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"recurring_expenses\",\"google_id\"]"
+    },
+    {
+      "op": "drop",
+      "key": "fks\u0000[\"public\",\"balance_adjustments\",\"balance_adjustments_account_google_owner_fk\"]"
+    },
+    {
+      "op": "drop",
+      "key": "fks\u0000[\"public\",\"transactions\",\"transactions_account_google_owner_fk\"]"
+    },
+    {
+      "op": "drop",
+      "key": "uniques\u0000[\"public\",\"accounts\",\"accounts_clerk_user_id_key\"]"
+    },
+    {
+      "op": "drop",
+      "key": "uniques\u0000[\"public\",\"accounts\",\"accounts_id_google_id_unique\"]"
+    },
+    {
+      "op": "drop",
+      "key": "uniques\u0000[\"public\",\"accounts\",\"accounts_google_id_key\"]"
+    },
+    {
+      "op": "drop",
+      "key": "checks\u0000[\"public\",\"accounts\",\"accounts_owner_not_empty\"]"
+    },
+    {
+      "op": "drop",
+      "key": "checks\u0000[\"public\",\"accounts\",\"accounts_google_id_not_empty\"]"
+    },
+    {
+      "op": "alter",
+      "key": "indexes\u0000[\"public\",\"recurring_expenses_account_idx\"]",
+      "set": {
+        "columns": [
+          {
+            "value": "account_id",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "user_id",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ]
+      }
+    },
+    {
+      "op": "alter",
+      "key": "fks\u0000[\"public\",\"recurring_expenses\",\"recurring_expenses_owner_fk\"]",
+      "set": {
+        "columns": [
+          "account_id",
+          "user_id"
+        ],
+        "columnsTo": [
+          "id",
+          "user_id"
+        ]
+      }
+    },
+    {
+      "op": "alter",
+      "key": "fks\u0000[\"public\",\"transactions\",\"transactions_recurrence_owner_fk\"]",
+      "set": {
+        "columns": [
+          "recurrence_id",
+          "account_id",
+          "user_id"
+        ],
+        "columnsTo": [
+          "id",
+          "account_id",
+          "user_id"
+        ]
+      }
+    },
+    {
+      "op": "alter",
+      "key": "uniques\u0000[\"public\",\"recurring_expenses\",\"recurring_expenses_id_owner_unique\"]",
+      "set": {
+        "columns": [
+          "id",
+          "account_id",
+          "user_id"
+        ]
+      }
+    }
+  ]
+}

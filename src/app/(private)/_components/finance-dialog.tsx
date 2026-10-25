@@ -1,7 +1,13 @@
 "use client";
 
+import { usePreferences } from "./preferences-context";
+
+import { FormLayout, FormField, FormActions } from "@/app/_components/ui/form-layout";
+
+import { Input } from "@/app/_components/ui/input";
+
 import { useState } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   createTransactionSchema,
@@ -40,7 +46,12 @@ import {
   transactionCategories,
 } from "@schemas/transaction/category";
 import { useFinanceRefresh } from "./refresh-context";
-import { LoaderCircle } from "lucide-react";
+import { LoaderCircle, Repeat } from "lucide-react";
+import {
+  recurrenceFrequencies,
+  recurrenceLabels,
+  type RecurrenceFrequency,
+} from "@schemas/recurrence/frequency";
 
 type Mode = "income" | "expense" | "balance";
 
@@ -59,7 +70,7 @@ async function submitSafely(
 
 function FieldError({ id, message }: { id: string; message?: string }) {
   return message ? (
-    <p id={id} className="field-error" role="alert">
+    <p id={id} className="field-error m-0 min-h-0 text-[13px] leading-normal text-[#a13e2e]" role="alert">
       {message}
     </p>
   ) : null;
@@ -67,31 +78,37 @@ function FieldError({ id, message }: { id: string; message?: string }) {
 
 function TransactionForm({
   mode,
+  defaultRepeat = "none",
   today,
   done,
   close,
 }: {
   mode: "income" | "expense";
+  defaultRepeat?: "none" | RecurrenceFrequency;
   today: string;
   done: () => void;
   close: () => void;
 }) {
+  const preferences = usePreferences();
   const { setMutating } = useFinanceRefresh();
   const [requestId] = useState(() => crypto.randomUUID());
   const form = useForm<CreateTransactionInput, unknown, CreateTransactionData>({
     resolver: zodResolver(createTransactionSchema),
     defaultValues: {
       requestId,
+      expectedSettingsVersion: preferences.settingsVersion,
       type: mode,
       amount: "",
       description: "",
       category: "other",
       occurredOn: today,
+      repeat: mode === "expense" ? defaultRepeat : "none",
     },
   });
   const { errors, isSubmitting } = form.formState;
+  const repeating = useWatch({ control: form.control, name: "repeat" }) !== "none";
   return (
-    <form
+    <FormLayout
       onSubmit={form.handleSubmit(async (values) => {
         form.clearErrors();
         setMutating(true);
@@ -110,11 +127,11 @@ function TransactionForm({
             });
         }
       })}
-      className="finance-form"
+
       noValidate
     >
       <fieldset disabled={isSubmitting}>
-        <div className="finance-field">
+        <FormField>
           <label htmlFor="transaction-amount">Qual é o valor?</label>
           <Controller
             control={form.control}
@@ -133,10 +150,10 @@ function TransactionForm({
             )}
           />
           <FieldError id="amount-error" message={errors.amount?.message} />
-        </div>
-        <div className="finance-field">
+        </FormField>
+        <FormField>
           <label htmlFor="transaction-description">Descrição</label>
-          <input
+          <Input
             id="transaction-description"
             placeholder={mode === "income" ? "Ex.: salário" : "Ex.: mercado"}
             maxLength={160}
@@ -150,8 +167,8 @@ function TransactionForm({
             id="description-error"
             message={errors.description?.message}
           />
-        </div>
-        <div className="finance-field">
+        </FormField>
+        <FormField>
           <label htmlFor="transaction-category">Categoria</label>
           <Controller
             control={form.control}
@@ -188,9 +205,59 @@ function TransactionForm({
             )}
           />
           <FieldError id="category-error" message={errors.category?.message} />
-        </div>
-        <div className="finance-field">
-          <label htmlFor="transaction-date">Data da movimentação</label>
+        </FormField>
+        {mode === "expense" && (
+          <FormField>
+            <label htmlFor="transaction-repeat">Repetição</label>
+            <Controller
+              control={form.control}
+              name="repeat"
+              render={({ field }) => (
+                <Select
+                  value={field.value}
+                  onValueChange={(value) => {
+                    field.onChange(value);
+                    const date = form.getValues("occurredOn");
+                    if (
+                      (value === "none" && date > today) ||
+                      (value !== "none" && date < today)
+                    )
+                      form.setValue("occurredOn", today);
+                  }}
+                  disabled={isSubmitting}
+                  items={[
+                    { value: "none", label: "Não repetir" },
+                    ...recurrenceFrequencies.map((value) => ({
+                      value,
+                      label: recurrenceLabels[value],
+                    })),
+                  ]}
+                >
+                  <SelectTrigger
+                    id="transaction-repeat"
+                    ref={field.ref}
+                    onBlur={field.onBlur}
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent alignItemWithTrigger={false}>
+                    <SelectItem value="none">Não repetir</SelectItem>
+                    {recurrenceFrequencies.map((value) => (
+                      <SelectItem key={value} value={value}>
+                        {recurrenceLabels[value]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            <FieldError id="repeat-error" message={errors.repeat?.message} />
+          </FormField>
+        )}
+        <FormField>
+          <label htmlFor="transaction-date">
+            {repeating ? "Primeiro lançamento" : "Data da movimentação"}
+          </label>
           <Controller
             control={form.control}
             name="occurredOn"
@@ -202,6 +269,7 @@ function TransactionForm({
                 onBlur={field.onBlur}
                 triggerRef={field.ref}
                 today={today}
+                future={repeating}
                 disabled={isSubmitting}
                 invalid={!!errors.occurredOn}
                 describedBy={errors.occurredOn ? "date-error" : undefined}
@@ -209,14 +277,20 @@ function TransactionForm({
             )}
           />
           <FieldError id="date-error" message={errors.occurredOn?.message} />
-        </div>
+        </FormField>
       </fieldset>
+      {repeating && (
+        <div className="form-note m-0 flex items-start gap-2.5 rounded-lg bg-[#eef3e6] p-3 text-[#536c43] [&_svg]:w-5 [&_svg]:shrink-0 [&_p]:m-0 [&_p]:text-sm [&_p]:leading-normal">
+          <Icon name="history" />
+          <p>Saída automática até você encerrar em Recorrências.</p>
+        </div>
+      )}
       {errors.root && (
-        <p className="form-error" role="alert">
+        <p className="form-error m-0 rounded-lg border border-[#e4c6b5] bg-[#fcf1eb] p-3 text-sm leading-[1.6] text-[#963e2d]" role="alert">
           {errors.root.message}
         </p>
       )}
-      <div className="finance-form-actions">
+      <FormActions>
         <Button
           type="button"
           variant="outline"
@@ -227,18 +301,18 @@ function TransactionForm({
         </Button>
         <Button
           type="submit"
-          className="finance-submit"
+          className="finance-submit [&_svg]:size-4"
           disabled={isSubmitting}
         >
           {isSubmitting && (
-            <LoaderCircle className="spinner" aria-hidden="true" />
+            <LoaderCircle className="spinner animate-spin motion-reduce:animate-none" aria-hidden="true" />
           )}
           {isSubmitting
             ? "Salvando…"
             : `Salvar ${mode === "income" ? "entrada" : "saída"}`}
         </Button>
-      </div>
-    </form>
+      </FormActions>
+    </FormLayout>
   );
 }
 
@@ -253,16 +327,17 @@ function BalanceForm({
   done: () => void;
   close: () => void;
 }) {
+  const preferences = usePreferences();
   const { setMutating, refresh } = useFinanceRefresh();
   const [requestId] = useState(() => crypto.randomUUID());
   const [conflict, setConflict] = useState(false);
   const form = useForm<AdjustBalanceInput, unknown, AdjustBalanceData>({
     resolver: zodResolver(adjustBalanceSchema),
-    defaultValues: { requestId, balance, reason: "", expectedVersion: version },
+    defaultValues: { requestId, balance, reason: "", expectedVersion: version, expectedSettingsVersion: preferences.settingsVersion },
   });
   const { errors, isSubmitting } = form.formState;
   return (
-    <form
+    <FormLayout
       onSubmit={form.handleSubmit(async (values) => {
         form.clearErrors();
         setMutating(true);
@@ -283,11 +358,11 @@ function BalanceForm({
             });
         }
       })}
-      className="finance-form"
+
       noValidate
     >
       <fieldset disabled={isSubmitting || conflict}>
-        <div className="finance-field">
+        <FormField>
           <label htmlFor="new-balance">Qual é seu saldo real agora?</label>
           <Controller
             control={form.control}
@@ -306,10 +381,10 @@ function BalanceForm({
             )}
           />
           <FieldError id="balance-error" message={errors.balance?.message} />
-        </div>
-        <div className="finance-field">
+        </FormField>
+        <FormField>
           <label htmlFor="adjustment-reason">Motivo do ajuste</label>
-          <input
+          <Input
             id="adjustment-reason"
             placeholder="Ex.: conferência do saldo da conta"
             maxLength={240}
@@ -318,20 +393,22 @@ function BalanceForm({
             {...form.register("reason")}
           />
           <FieldError id="reason-error" message={errors.reason?.message} />
-        </div>
+        </FormField>
       </fieldset>
-      <div className="form-note">
+      <div className="form-note m-0 flex items-start gap-2.5 rounded-lg bg-[#eef3e6] p-3 text-[#536c43] [&_svg]:w-5 [&_svg]:shrink-0 [&_p]:m-0 [&_p]:text-sm [&_p]:leading-normal">
         <Icon name="history" />
-        <p>O ajuste fica no histórico, fora dos totais de entradas e saídas.</p>
+        <p title="O ajuste fica no histórico, fora dos totais de entradas e saídas.">
+          Não altera entradas e saídas.
+        </p>
       </div>
       {errors.root && (
-        <p className="form-error" role="alert">
+        <p className="form-error m-0 rounded-lg border border-[#e4c6b5] bg-[#fcf1eb] p-3 text-sm leading-[1.6] text-[#963e2d]" role="alert">
           {errors.root.message}
         </p>
       )}
-      <div className="finance-form-actions">
+      <FormActions>
         {conflict ? (
-          <Button type="button" className="finance-submit" onClick={close}>
+          <Button type="button" className="finance-submit [&_svg]:size-4" onClick={close}>
             Conferir saldo
           </Button>
         ) : (
@@ -346,23 +423,24 @@ function BalanceForm({
             </Button>
             <Button
               type="submit"
-              className="finance-submit"
+              className="finance-submit [&_svg]:size-4"
               disabled={isSubmitting}
             >
               {isSubmitting && (
-                <LoaderCircle className="spinner" aria-hidden="true" />
+                <LoaderCircle className="spinner animate-spin motion-reduce:animate-none" aria-hidden="true" />
               )}
               {isSubmitting ? "Salvando…" : "Salvar saldo"}
             </Button>
           </>
         )}
-      </div>
-    </form>
+      </FormActions>
+    </FormLayout>
   );
 }
 
 export function FinanceDialog({
   mode,
+  defaultRepeat,
   today,
   balance,
   version,
@@ -370,6 +448,7 @@ export function FinanceDialog({
   onSuccess,
 }: {
   mode: Mode;
+  defaultRepeat?: "none" | RecurrenceFrequency;
   today: string;
   balance: string;
   version: number;
@@ -377,12 +456,16 @@ export function FinanceDialog({
   onSuccess: () => void;
 }) {
   const { busy } = useFinanceRefresh();
+  const isRecurrence =
+    mode === "expense" && !!defaultRepeat && defaultRepeat !== "none";
   const title =
     mode === "balance"
       ? "Ajustar saldo"
       : mode === "income"
         ? "Adicionar entrada"
-        : "Adicionar saída";
+        : isRecurrence
+          ? "Adicionar recorrência"
+          : "Adicionar saída";
   return (
     <Dialog
       open
@@ -390,13 +473,13 @@ export function FinanceDialog({
         if (!open && !busy) onClose();
       }}
     >
-      <DialogContent className="finance-modal" showCloseButton={false}>
+      <DialogContent className="finance-modal max-h-[calc(100svh-32px)] w-[min(480px,calc(100vw-32px))] max-w-[min(480px,calc(100vw-32px))]! gap-6 overflow-y-auto bg-[#fbfcf8] p-6 max-[400px]:gap-[22px] max-[400px]:px-[18px] max-[400px]:py-[22px]" showCloseButton={false}>
         <DialogClose
           render={
             <Button
               size="icon"
               variant="ghost"
-              className="finance-modal-close"
+              className="finance-modal-close absolute top-2.5 right-2.5"
               aria-label="Fechar formulário"
               disabled={busy}
             />
@@ -404,24 +487,30 @@ export function FinanceDialog({
         >
           <Icon name="close" />
         </DialogClose>
-        <DialogHeader className="finance-modal-heading">
-          <div className={`dialog-symbol ${mode}`}>
-            <Icon
-              name={
-                mode === "balance"
-                  ? "sliders"
-                  : mode === "income"
-                    ? "arrowDown"
-                    : "arrowUp"
-              }
-            />
+        <DialogHeader className="finance-modal-heading grid grid-cols-[48px_minmax(0,1fr)] items-stretch gap-3 pr-7 [&_.dialog-symbol]:m-0 [&_.dialog-symbol]:h-auto [&_.dialog-symbol]:min-h-12 [&_.dialog-symbol]:w-12 [&_[data-slot=dialog-description]]:mt-1.5 [&_[data-slot=dialog-description]]:text-sm [&_[data-slot=dialog-description]]:leading-normal [&_[data-slot=dialog-description]]:text-[#526548] max-[400px]:gap-2.5 max-[400px]:pr-6">
+          <div className={`dialog-symbol mb-[5px] grid size-11 place-items-center rounded-xl bg-[#e9f0df] text-[#547737] [&.expense]:bg-[#faeee5] [&.expense]:text-[#a35b38] ${isRecurrence ? "recurrence" : mode}`}>
+            {isRecurrence ? (
+              <Repeat size={20} aria-hidden="true" />
+            ) : (
+              <Icon
+                name={
+                  mode === "balance"
+                    ? "sliders"
+                    : mode === "income"
+                      ? "arrowDown"
+                      : "arrowUp"
+                }
+              />
+            )}
           </div>
           <div>
-            <DialogTitle className="finance-modal-title">{title}</DialogTitle>
+            <DialogTitle className="finance-modal-title m-0 text-[23px] leading-[1.3] font-semibold tracking-[-0.7px] max-[400px]:text-[21px]">{title}</DialogTitle>
             <DialogDescription>
               {mode === "balance"
                 ? "Informe o saldo real da sua carteira."
-                : "Informe o valor e os detalhes da movimentação."}
+                : isRecurrence
+                  ? "Defina o valor, a frequência e o primeiro lançamento."
+                  : "Informe o valor e os detalhes da movimentação."}
             </DialogDescription>
           </div>
         </DialogHeader>
@@ -434,6 +523,7 @@ export function FinanceDialog({
           />
         ) : (
           <TransactionForm
+            defaultRepeat={defaultRepeat}
             close={onClose}
             mode={mode}
             today={today}

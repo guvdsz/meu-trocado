@@ -4,7 +4,7 @@ export function moneyFromInput(
   allowNegative = false,
 ): string | null {
   if (!text.trim()) return "";
-  const numeric = text.trim().replace(/^R\$\s*/, "");
+  const numeric = text.trim().replace(/^(?:BRL|USD|EUR|GBP|CAD|AUD|R\$|US\$|CA\$|A\$|\$|€|£)\s*/i, "");
   if (!/^-?[\d.,\s]*$/.test(numeric)) return null;
   const negative = text.includes("-");
   if (negative && !allowNegative) return null;
@@ -15,11 +15,12 @@ export function moneyFromInput(
   return `${negative ? "-" : ""}${padded.slice(0, -2)}.${padded.slice(-2)}`;
 }
 
-export function formatMoneyInput(value: string): string {
+export function formatMoneyInput(value: string, locale = "pt-BR"): string {
   if (!value || value === "-") return value;
   const negative = value.startsWith("-");
   const [integer, fraction = ""] = value.replace(/^-/, "").split(".");
-  return `${negative ? "-" : ""}${integer.replace(/\B(?=(\d{3})+(?!\d))/g, ".")},${fraction.padEnd(2, "0")}`;
+  const decimal = new Intl.NumberFormat(locale).formatToParts(1.1).find(p => p.type === "decimal")!.value;
+  return `${negative ? "-" : ""}${BigInt(integer).toLocaleString(locale)}${decimal}${fraction.padEnd(2, "0")}`;
 }
 
 export function caretFromRight(value: string, digitsRight: number): number {

@@ -1,27 +1,24 @@
 import "server-only";
 import { auth, currentUser } from "@clerk/nextjs/server";
-import { getGoogleId } from "./google-identity";
+import { cache } from "react";
+import { withDatabase } from "@/db";
+import { resolveUser } from "@/db/queries/users";
 
 export class IdentityError extends Error {}
 
-export async function requireGoogleIdentity() {
+export const requireUser = cache(async () => {
   const session = await auth();
   if (!session.userId)
     throw new IdentityError("Entre na sua conta para continuar.");
   const user = await currentUser();
   if (!user || user.id !== session.userId)
     throw new IdentityError("Sua sessão expirou. Entre novamente.");
-  const googleId = getGoogleId(user.externalAccounts);
-  if (!googleId)
-    throw new IdentityError(
-      "Conecte uma única conta Google ao seu perfil para acessar suas finanças.",
-    );
+  const [localUser] = await withDatabase((db) => resolveUser(db, user.id));
   return {
-    clerkUserId: user.id,
-    googleId,
+    userId: localUser.id,
     name: user.firstName ?? "por aqui",
     email: user.primaryEmailAddress?.emailAddress ?? "",
   };
-}
+});
 
-export type GoogleIdentity = Awaited<ReturnType<typeof requireGoogleIdentity>>;
+export type UserIdentity = Awaited<ReturnType<typeof requireUser>>;

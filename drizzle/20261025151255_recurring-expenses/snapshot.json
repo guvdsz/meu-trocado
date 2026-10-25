@@ -1,0 +1,699 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "558016b0-9d44-4fde-a02e-417c4bc50da8",
+  "prevIds": [
+    "2b9bb4e1-d4bd-4b5a-82dd-fc9c620745be"
+  ],
+  "footprints": [
+    {
+      "statementType": "create_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "recurrence_frequency"
+      ],
+      "writes": [
+        "s|enum|public.recurrence_frequency",
+        "n|enum|public.recurrence_frequency",
+        "e|enum|public.recurrence_frequency",
+        "n|type|public.recurrence_frequency"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "recurring_expenses"
+      ],
+      "writes": [
+        "s|tbl|public.recurring_expenses",
+        "n|tbl|public.recurring_expenses",
+        "e|tbl|public.recurring_expenses",
+        "n|rel|public.recurring_expenses",
+        "n|type|public.recurring_expenses",
+        "n|rel|public.recurring_expenses_pkey",
+        "n|rel|public.recurring_expenses_id_owner_unique",
+        "n|rel|public.recurring_expenses_request_id_key"
+      ],
+      "reads": [
+        "n|sch|public",
+        "n|enum|public.transaction_category",
+        "n|enum|public.recurrence_frequency"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "transactions",
+        "recurrence_id"
+      ],
+      "writes": [
+        "s|col|public.transactions.recurrence_id",
+        "n|col|public.transactions.recurrence_id",
+        "e|col|public.transactions.recurrence_id"
+      ],
+      "reads": [
+        "n|tbl|public.transactions",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_unique",
+      "statementTarget": [
+        "table",
+        "public",
+        "transactions"
+      ],
+      "writes": [
+        "s|uq|public.transactions.transactions_recurrence_date_unique",
+        "n|uq|public.transactions.transactions_recurrence_date_unique",
+        "e|uq|public.transactions.transactions_recurrence_date_unique",
+        "n|con|public.transactions.transactions_recurrence_date_unique",
+        "n|rel|public.transactions_recurrence_date_unique"
+      ],
+      "reads": [
+        "n|tbl|public.transactions",
+        "n|sch|public",
+        "n|col|public.transactions.recurrence_id",
+        "n|col|public.transactions.occurred_on"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "recurring_expenses",
+        "recurring_expenses_due_idx"
+      ],
+      "writes": [
+        "s|idx|public.recurring_expenses_due_idx",
+        "n|idx|public.recurring_expenses_due_idx",
+        "e|idx|public.recurring_expenses_due_idx",
+        "n|rel|public.recurring_expenses_due_idx"
+      ],
+      "reads": [
+        "n|tbl|public.recurring_expenses",
+        "n|sch|public",
+        "n|col|public.recurring_expenses.next_due_on"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "recurring_expenses",
+        "recurring_expenses_account_idx"
+      ],
+      "writes": [
+        "s|idx|public.recurring_expenses_account_idx",
+        "n|idx|public.recurring_expenses_account_idx",
+        "e|idx|public.recurring_expenses_account_idx",
+        "n|rel|public.recurring_expenses_account_idx"
+      ],
+      "reads": [
+        "n|tbl|public.recurring_expenses",
+        "n|sch|public",
+        "n|col|public.recurring_expenses.account_id",
+        "n|col|public.recurring_expenses.google_id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "recurring_expenses"
+      ],
+      "writes": [
+        "s|fk|public.recurring_expenses.recurring_expenses_owner_fk",
+        "n|fk|public.recurring_expenses.recurring_expenses_owner_fk",
+        "e|fk|public.recurring_expenses.recurring_expenses_owner_fk",
+        "n|con|public.recurring_expenses.recurring_expenses_owner_fk"
+      ],
+      "reads": [
+        "n|tbl|public.recurring_expenses",
+        "n|sch|public",
+        "n|tbl|public.accounts",
+        "n|sch|public",
+        "n|col|public.recurring_expenses.account_id",
+        "n|col|public.recurring_expenses.google_id",
+        "n|col|public.accounts.id",
+        "n|col|public.accounts.google_id",
+        "e|uniqueness|public.accounts.google_id.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "transactions"
+      ],
+      "writes": [
+        "s|fk|public.transactions.transactions_recurrence_owner_fk",
+        "n|fk|public.transactions.transactions_recurrence_owner_fk",
+        "e|fk|public.transactions.transactions_recurrence_owner_fk",
+        "n|con|public.transactions.transactions_recurrence_owner_fk"
+      ],
+      "reads": [
+        "n|tbl|public.transactions",
+        "n|sch|public",
+        "n|tbl|public.recurring_expenses",
+        "n|sch|public",
+        "n|col|public.transactions.recurrence_id",
+        "n|col|public.transactions.account_id",
+        "n|col|public.transactions.google_id",
+        "n|col|public.recurring_expenses.id",
+        "n|col|public.recurring_expenses.account_id",
+        "n|col|public.recurring_expenses.google_id",
+        "e|uniqueness|public.recurring_expenses.account_id.google_id.id"
+      ]
+    },
+    {
+      "statementType": "add_check",
+      "statementTarget": [
+        "table",
+        "public",
+        "transactions"
+      ],
+      "writes": [
+        "s|ck|public.transactions.transactions_recurrence_expense_only",
+        "n|ck|public.transactions.transactions_recurrence_expense_only",
+        "e|ck|public.transactions.transactions_recurrence_expense_only",
+        "n|con|public.transactions.transactions_recurrence_expense_only"
+      ],
+      "reads": [
+        "n|tbl|public.transactions",
+        "n|sch|public",
+        "n|col|public.transactions.recurrence_id",
+        "n|col|public.transactions.type"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "recurring_expenses",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "recurrence_frequency",
+        "values": [
+          "monthly",
+          "yearly",
+          "semiannual",
+          "fortnightly"
+        ],
+        "entityType": "enums"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "recurring_expenses",
+        "name": "id",
+        "type": "uuid",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "gen_random_uuid()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "recurring_expenses",
+        "name": "account_id",
+        "type": "uuid",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "recurring_expenses",
+        "name": "google_id",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "recurring_expenses",
+        "name": "request_id",
+        "type": "uuid",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "recurring_expenses",
+        "name": "creation_hash",
+        "type": "varchar(64)",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "recurring_expenses",
+        "name": "description",
+        "type": "varchar(160)",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "recurring_expenses",
+        "name": "amount",
+        "type": "numeric(15,2)",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "recurring_expenses",
+        "name": "category",
+        "type": "transaction_category",
+        "typeSchema": "public",
+        "notNull": true,
+        "dimensions": 0,
+        "default": "'other'",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "recurring_expenses",
+        "name": "frequency",
+        "type": "recurrence_frequency",
+        "typeSchema": "public",
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "recurring_expenses",
+        "name": "starts_on",
+        "type": "date",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "recurring_expenses",
+        "name": "next_due_on",
+        "type": "date",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "recurring_expenses",
+        "name": "next_occurrence",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "0",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "recurring_expenses",
+        "name": "version",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "0",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "recurring_expenses",
+        "name": "ended_at",
+        "type": "timestamp with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "recurring_expenses",
+        "name": "created_at",
+        "type": "timestamp with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "recurring_expenses",
+        "name": "updated_at",
+        "type": "timestamp with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "transactions",
+        "name": "recurrence_id",
+        "type": "uuid",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "recurring_expenses",
+        "name": "recurring_expenses_due_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "next_due_on",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": "\"ended_at\" is null",
+        "with": "",
+        "method": "btree",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "recurring_expenses",
+        "name": "recurring_expenses_account_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "account_id",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "google_id",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "recurring_expenses",
+        "name": "recurring_expenses_owner_fk",
+        "nameExplicit": true,
+        "columns": [
+          "account_id",
+          "google_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "accounts",
+        "columnsTo": [
+          "id",
+          "google_id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "RESTRICT",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "transactions",
+        "name": "transactions_recurrence_owner_fk",
+        "nameExplicit": true,
+        "columns": [
+          "recurrence_id",
+          "account_id",
+          "google_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "recurring_expenses",
+        "columnsTo": [
+          "id",
+          "account_id",
+          "google_id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "RESTRICT",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "recurring_expenses",
+        "name": "recurring_expenses_pkey",
+        "columns": [
+          "id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "recurring_expenses",
+        "name": "recurring_expenses_id_owner_unique",
+        "nameExplicit": true,
+        "columns": [
+          "id",
+          "account_id",
+          "google_id"
+        ],
+        "nullsNotDistinct": false,
+        "entityType": "uniques"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "transactions",
+        "name": "transactions_recurrence_date_unique",
+        "nameExplicit": true,
+        "columns": [
+          "recurrence_id",
+          "occurred_on"
+        ],
+        "nullsNotDistinct": false,
+        "entityType": "uniques"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "recurring_expenses",
+        "name": "recurring_expenses_request_id_key",
+        "nameExplicit": false,
+        "columns": [
+          "request_id"
+        ],
+        "nullsNotDistinct": false,
+        "entityType": "uniques"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "recurring_expenses",
+        "name": "recurring_amount_positive",
+        "value": "\"amount\" between 0.01 and 9999999999999.99",
+        "entityType": "checks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "recurring_expenses",
+        "name": "recurring_description_not_empty",
+        "value": "length(btrim(\"description\")) > 0",
+        "entityType": "checks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "recurring_expenses",
+        "name": "recurring_progress_valid",
+        "value": "\"next_occurrence\" >= 0 and \"version\" >= 0 and \"next_due_on\" >= \"starts_on\"",
+        "entityType": "checks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "transactions",
+        "name": "transactions_recurrence_expense_only",
+        "value": "\"recurrence_id\" is null or \"type\" = 'expense'",
+        "entityType": "checks"
+      }
+    }
+  ]
+}

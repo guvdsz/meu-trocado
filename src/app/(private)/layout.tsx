@@ -1,3 +1,6 @@
+import { getPreferences } from "@/db/queries/settings";
+import { PreferencesProvider } from "./_components/preferences-context";
+import { SettingsForm } from "./settings/_components/settings-form";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -10,13 +13,14 @@ async function ProtectedContent({ children }: { children: React.ReactNode }) {
   await auth.protect();
   const user = await currentUser();
   if (!user) redirect("/auth/sign-in");
+  const preferences = await getPreferences();
   return (
-    <AppShell
+    <PreferencesProvider preferences={preferences} key={preferences.settingsVersion}><AppShell
       name={user.firstName ?? "Minha conta"}
       email={user.primaryEmailAddress?.emailAddress ?? ""}
     >
-      {children}
-    </AppShell>
+      {preferences.configured ? children : <SettingsForm mandatory />}
+    </AppShell></PreferencesProvider>
   );
 }
 

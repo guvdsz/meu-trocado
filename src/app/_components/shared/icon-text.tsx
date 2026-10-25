@@ -40,7 +40,7 @@ export function IconText({
   }, []);
 
   return (
-    <div ref={container} className={`icon-text ${className}`}>
+    <div ref={container} className={`icon-text grid grid-cols-[var(--text-icon-size,72px)_minmax(0,1fr)] items-start ${className}`}>
       {icon}
       <div ref={text} className={textClassName}>
         {children}

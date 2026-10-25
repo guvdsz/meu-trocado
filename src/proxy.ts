@@ -1,6 +1,11 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
-const isPublicRoute = createRouteMatcher(["/auth/sign-in(.*)", "/__clerk(.*)"]);
+// The cron endpoint authenticates with CRON_SECRET instead of a Clerk session.
+const isPublicRoute = createRouteMatcher([
+  "/auth/sign-in(.*)",
+  "/__clerk(.*)",
+  "/api/cron/recurrences",
+]);
 
 export default clerkMiddleware(
   async (auth, request) => {

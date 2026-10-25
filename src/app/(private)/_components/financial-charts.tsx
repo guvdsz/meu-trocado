@@ -1,5 +1,7 @@
 "use client";
 
+import { usePreferences, useFinancialFormat } from "@/app/(private)/_components/preferences-context";
+
 import type { ComponentProps } from "react";
 
 import {
@@ -25,8 +27,8 @@ import {
   type TransactionCategory,
 } from "@schemas/transaction/category";
 import { expenseShare, monthlySeries } from "@/lib/financial-analysis";
-import { formatMoney, toCents } from "@/lib/financial";
-import type { CategoryTotal, MonthlyTotal } from "@/db/queries/dashboard-sql";
+import { toCents } from "@/lib/financial";
+import type { CategoryTotal, MonthlyTotal } from "@/db/queries/financial-types";
 
 const monthlyConfig = {
   incomeValue: { label: "Entradas", color: "#719252" },
@@ -51,18 +53,19 @@ const categoryColors: Record<TransactionCategory, string> = {
   other: "#8a9083",
 };
 
-function axisMoney(value: number) {
-  return new Intl.NumberFormat("pt-BR", {
+function axisMoney(value: number, locale: string) {
+  return new Intl.NumberFormat(locale, {
     notation: "compact",
     maximumFractionDigits: 1,
   }).format(value);
 }
 
 function MonthlyTooltip(props: ComponentProps<typeof ChartTooltipContent>) {
+  const { formatMoney } = useFinancialFormat();
   return (
     <ChartTooltipContent
       {...props}
-      className="finance-chart-tooltip"
+      className="finance-chart-tooltip max-w-[min(300px,calc(100vw-40px))] rounded-xl bg-white p-5 text-sm shadow-[0_4px_14px_#263c3214]"
       labelFormatter={(_, payload) => payload[0]?.payload.fullLabel}
       formatter={(_, name, item) => {
         const key =
@@ -73,7 +76,7 @@ function MonthlyTooltip(props: ComponentProps<typeof ChartTooltipContent>) {
               : "net";
         const label = monthlyConfig[name as keyof typeof monthlyConfig]?.label;
         return (
-          <div className="financial-tooltip-row">
+          <div className="financial-tooltip-row flex w-full items-center justify-between gap-5 text-sm [&>span]:flex [&>span]:items-center [&>span]:gap-2 [&_i]:inline-block [&_i]:size-2.5 [&_i]:shrink-0 [&_i]:rounded-[3px] [&_strong]:font-semibold [&_strong]:tabular-nums">
             <span>
               <i style={{ background: item.color }} />
               {label}
@@ -93,7 +96,9 @@ export function MonthlyCharts({
   rows: MonthlyTotal[];
   month: string;
 }) {
-  const series = monthlySeries(rows, month);
+  const { formatMoney } = useFinancialFormat();
+  const { locale, currency } = usePreferences();
+  const series = monthlySeries(rows, month, locale);
   const hasIncome = series.some((row) => toCents(row.income) > BigInt(0));
   const hasExpense = series.some((row) => toCents(row.expense) > BigInt(0));
   const empty = series.every(
@@ -103,16 +108,16 @@ export function MonthlyCharts({
   return (
     <>
       <section
-        className="finance-panel finance-chart"
+        className="finance-panel overflow-hidden rounded-2xl border bg-white finance-chart relative min-h-80"
         aria-labelledby="income-expense-title"
       >
-        <div className="financial-chart-heading">
+        <div className="financial-chart-heading px-6 pt-6 pb-4 [&_h2]:m-0 [&_h2]:text-lg [&_h2]:leading-[1.4] [&_h2]:font-semibold [&_h2]:tracking-[-0.35px] [&_p]:mt-1.5 [&_p]:text-sm [&_p]:leading-normal [&_p]:text-muted-foreground max-[650px]:px-[18px] max-[650px]:pt-5 max-[650px]:[&_h2]:text-[17px]">
           <div>
             <h2 id="income-expense-title">Entradas e saídas</h2>
-            <p>Últimos seis meses · valores em R$</p>
+            <p>Últimos seis meses · valores em {currency}</p>
           </div>
         </div>
-        <div className="financial-chart-legend">
+        <div className="financial-chart-legend leading-normal flex items-center gap-5 px-6 pb-3 text-sm text-muted-foreground [&_span]:flex [&_span]:items-center [&_span]:gap-2 [&_i]:inline-block [&_i]:size-2.5 [&_i]:shrink-0 [&_i]:rounded-[3px] max-[650px]:px-[18px] max-[650px]:pb-2.5">
           <span>
             <i style={{ background: monthlyConfig.incomeValue.color }} />
             Entradas
@@ -122,10 +127,10 @@ export function MonthlyCharts({
             Saídas
           </span>
         </div>
-        <div className="financial-plot">
+        <div className="financial-plot relative pr-3.5 pb-5 pl-2 max-[650px]:pr-2 max-[650px]:pl-0">
           <ChartContainer
             config={monthlyConfig}
-            className="financial-chart-canvas"
+            className="financial-chart-canvas h-[260px] w-full aspect-auto text-[13px] max-[650px]:h-[250px]"
           >
             <BarChart
               accessibilityLayer
@@ -144,7 +149,7 @@ export function MonthlyCharts({
               <YAxis
                 tickLine={false}
                 axisLine={false}
-                tickFormatter={axisMoney}
+                tickFormatter={value => axisMoney(value, locale)}
                 width={48}
                 tickCount={5}
               />
@@ -173,7 +178,7 @@ export function MonthlyCharts({
             </BarChart>
           </ChartContainer>
           {empty && (
-            <p className="financial-chart-empty">
+            <p className="financial-chart-empty absolute top-1/4 right-6 left-6 m-0 rounded-[10px] bg-[#fffffff0] p-3 text-center text-[15px] text-muted-foreground">
               Nenhuma movimentação nesses seis meses.
             </p>
           )}
@@ -199,25 +204,25 @@ export function MonthlyCharts({
         </table>
       </section>
       <section
-        className="finance-panel finance-chart"
+        className="finance-panel overflow-hidden rounded-2xl border bg-white finance-chart relative min-h-80"
         aria-labelledby="monthly-net-title"
       >
-        <div className="financial-chart-heading">
+        <div className="financial-chart-heading px-6 pt-6 pb-4 [&_h2]:m-0 [&_h2]:text-lg [&_h2]:leading-[1.4] [&_h2]:font-semibold [&_h2]:tracking-[-0.35px] [&_p]:mt-1.5 [&_p]:text-sm [&_p]:leading-normal [&_p]:text-muted-foreground max-[650px]:px-[18px] max-[650px]:pt-5 max-[650px]:[&_h2]:text-[17px]">
           <div>
             <h2 id="monthly-net-title">Evolução mensal</h2>
             <p>Entradas menos saídas · sem ajustes de saldo</p>
           </div>
         </div>
-        <div className="financial-chart-legend">
+        <div className="financial-chart-legend flex items-center gap-5 px-6 pb-3 text-sm text-muted-foreground [&_span]:flex [&_span]:items-center [&_span]:gap-2 [&_i]:inline-block [&_i]:size-2.5 [&_i]:shrink-0 [&_i]:rounded-[3px] max-[650px]:px-[18px] max-[650px]:pb-2.5">
           <span>
             <i style={{ background: monthlyConfig.netValue.color }} />
             Resultado do mês
           </span>
         </div>
-        <div className="financial-plot">
+        <div className="financial-plot relative pr-3.5 pb-5 pl-2 max-[650px]:pr-2 max-[650px]:pl-0">
           <ChartContainer
             config={monthlyConfig}
-            className="financial-chart-canvas"
+            className="financial-chart-canvas h-[260px] w-full aspect-auto text-[13px] max-[650px]:h-[250px]"
           >
             <LineChart
               accessibilityLayer
@@ -235,7 +240,7 @@ export function MonthlyCharts({
               <YAxis
                 tickLine={false}
                 axisLine={false}
-                tickFormatter={axisMoney}
+                tickFormatter={value => axisMoney(value, locale)}
                 width={48}
                 tickCount={5}
               />
@@ -253,7 +258,7 @@ export function MonthlyCharts({
             </LineChart>
           </ChartContainer>
           {empty && (
-            <p className="financial-chart-empty">
+            <p className="financial-chart-empty absolute top-1/4 right-6 left-6 m-0 rounded-[10px] bg-[#fffffff0] p-3 text-center text-[15px] text-muted-foreground">
               Adicione entradas e saídas para acompanhar a evolução.
             </p>
           )}
@@ -287,6 +292,7 @@ export function ExpenseCategoriesChart({
   categories: CategoryTotal[];
   total: string;
 }) {
+  const { formatMoney } = useFinancialFormat();
   const config = Object.fromEntries(
     categories.map((row) => [
       row.category,
@@ -304,31 +310,31 @@ export function ExpenseCategoriesChart({
   }));
   return (
     <section
-      className="finance-panel finance-chart expense-categories"
+      className="finance-panel overflow-hidden rounded-2xl border bg-white finance-chart relative min-h-80 expense-categories"
       aria-labelledby="category-chart-title"
     >
-      <div className="financial-chart-heading">
+      <div className="financial-chart-heading px-6 pt-6 pb-4 [&_h2]:m-0 [&_h2]:text-lg [&_h2]:leading-[1.4] [&_h2]:font-semibold [&_h2]:tracking-[-0.35px] [&_p]:mt-1.5 [&_p]:text-sm [&_p]:leading-normal [&_p]:text-muted-foreground max-[650px]:px-[18px] max-[650px]:pt-5 max-[650px]:[&_h2]:text-[17px]">
         <div>
           <h2 id="category-chart-title">Despesas por categoria</h2>
           <p>Distribuição dos gastos do mês selecionado</p>
         </div>
       </div>
-      <div className="category-chart-area">
-        <div className="financial-plot">
+      <div className="category-chart-area relative [&_.financial-plot]:z-10 [&_.financial-plot]:p-0">
+        <div className="financial-plot relative pr-3.5 pb-5 pl-2 max-[650px]:pr-2 max-[650px]:pl-0">
           {slices.length ? (
             <ChartContainer
               config={config}
-              className="financial-chart-canvas category-chart-canvas"
+              className="financial-chart-canvas h-[260px] w-full aspect-auto text-[13px] max-[650px]:h-[250px] category-chart-canvas h-[270px]! max-[650px]:h-[270px]!"
             >
               <PieChart accessibilityLayer>
                 <ChartTooltip
                   cursor={false}
                   content={
                     <ChartTooltipContent
-                      className="finance-chart-tooltip"
+                      className="finance-chart-tooltip max-w-[min(300px,calc(100vw-40px))] rounded-xl bg-white p-5 text-sm shadow-[0_4px_14px_#263c3214]"
                       hideLabel
                       formatter={(_, name, item) => (
-                        <div className="financial-tooltip-row">
+                        <div className="financial-tooltip-row flex w-full items-center justify-between gap-5 text-sm [&>span]:flex [&>span]:items-center [&>span]:gap-2 [&_i]:inline-block [&_i]:size-2.5 [&_i]:shrink-0 [&_i]:rounded-[3px] [&_strong]:font-semibold [&_strong]:tabular-nums">
                           <span>
                             <i style={{ background: item.payload.fill }} />
                             {categoryLabels[name as TransactionCategory]}
@@ -352,19 +358,19 @@ export function ExpenseCategoriesChart({
               </PieChart>
             </ChartContainer>
           ) : (
-            <div className="category-empty-ring" aria-hidden="true" />
+            <div className="category-empty-ring mx-auto my-[25px] size-[220px] rounded-full border-[30px] border-muted" aria-hidden="true" />
           )}
         </div>
-        <div className="category-chart-total">
+        <div className="category-chart-total pointer-events-none absolute top-1/2 left-1/2 z-0 grid w-1/2 -translate-x-1/2 -translate-y-1/2 gap-1 text-center [&>span]:text-sm [&>span]:leading-normal [&>span]:text-muted-foreground [&_strong]:text-[clamp(17px,1.8vw,25px)] [&_strong]:font-semibold [&_strong]:tracking-[-0.6px] [&_strong]:wrap-anywhere max-[850px]:[&_strong]:text-2xl">
           <span>Total de saídas</span>
           <strong>{formatMoney(total)}</strong>
         </div>
       </div>
       {categories.length ? (
-        <ul className="category-breakdown">
+        <ul className="category-breakdown m-0 list-none px-6 pb-5 [&_li]:flex [&_li]:items-center [&_li]:justify-between [&_li]:gap-3 [&_li]:border-b [&_li]:border-muted [&_li]:py-3 [&_li]:text-sm [&_li]:leading-normal [&_li:last-child]:border-0 [&_li>div]:grid [&_li>div]:gap-[3px] [&_li>div]:text-right [&_li>div]:tabular-nums [&_li>div>span]:text-muted-foreground [&_strong]:font-[550] max-[650px]:px-[18px] max-[650px]:pb-[18px]">
           {categories.map((row) => (
             <li key={row.category}>
-              <span className="category-breakdown-label">
+              <span className="category-breakdown-label flex items-center gap-2 [&_i]:inline-block [&_i]:size-2.5 [&_i]:shrink-0 [&_i]:rounded-[3px]">
                 <i style={{ background: categoryColors[row.category] }} />
                 {categoryLabels[row.category]}
               </span>
@@ -376,7 +382,7 @@ export function ExpenseCategoriesChart({
           ))}
         </ul>
       ) : (
-        <p className="financial-no-expenses">
+        <p className="financial-no-expenses m-0 px-6 pt-2 pb-6 text-center text-[15px] text-muted-foreground">
           Nenhuma saída no mês selecionado.
         </p>
       )}

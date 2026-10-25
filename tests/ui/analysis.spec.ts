@@ -119,7 +119,7 @@ test("gráficos e análises cabem em telas pequenas e possuem estados vazios", a
       .locator(".latest-activity-details")
       .boundingBox();
     expect(iconBox!.y).toBe(textBox!.y);
-    expect(iconBox!.height).toBe(textBox!.height);
+    expect(iconBox!.height).toBeCloseTo(Math.min(textBox!.height, 112), 0);
     expect(iconBox!.width).toBeCloseTo(iconBox!.height, 0);
     expect(iconBox!.x + iconBox!.width).toBeLessThan(textBox!.x);
     const rankBox = await page.locator(".expense-rank").first().boundingBox();
@@ -127,7 +127,7 @@ test("gráficos e análises cabem em telas pequenas e possuem estados vazios", a
       .locator(".top-expense-details")
       .first()
       .boundingBox();
-    expect(rankBox!.height).toBe(expenseTextBox!.height);
+    expect(rankBox!.height).toBeCloseTo(Math.min(expenseTextBox!.height, 112), 0);
     expect(rankBox!.width).toBeCloseTo(rankBox!.height, 0);
     expect(rankBox!.x + rankBox!.width).toBeLessThan(expenseTextBox!.x);
     await expect

@@ -1,7 +1,7 @@
 import { fromCents, toCents } from "./financial";
-import type { MonthlyTotal } from "@/db/queries/dashboard-sql";
+import type { MonthlyTotal } from "@/db/queries/financial-types";
 
-export function monthlySeries(rows: MonthlyTotal[], month: string) {
+export function monthlySeries(rows: MonthlyTotal[], month: string, locale = "pt-BR") {
   const end = new Date(`${month}-01T12:00:00Z`);
   return Array.from({ length: 6 }, (_, index) => {
     const date = new Date(end);
@@ -14,9 +14,9 @@ export function monthlySeries(rows: MonthlyTotal[], month: string) {
     return {
       month: key,
       label: date
-        .toLocaleDateString("pt-BR", { month: "short", timeZone: "UTC" })
+        .toLocaleDateString(locale, { month: "short", timeZone: "UTC" })
         .replace(".", ""),
-      fullLabel: date.toLocaleDateString("pt-BR", {
+      fullLabel: date.toLocaleDateString(locale, {
         month: "long",
         year: "numeric",
         timeZone: "UTC",

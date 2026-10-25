@@ -2,6 +2,7 @@ import { z } from "zod";
 import { moneySchema } from "@schemas/shared/money";
 
 export const adjustBalanceSchema = z.object({
+  expectedSettingsVersion: z.number().int().nonnegative().default(0),
   requestId: z.uuid({ message: "Identificador da operação inválido." }),
   balance: moneySchema,
   reason: z

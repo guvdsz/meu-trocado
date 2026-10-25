@@ -3,53 +3,20 @@ import { randomUUID } from "node:crypto";
 import { readFile, readdir } from "node:fs/promises";
 import test from "node:test";
 import { PGlite } from "@electric-sql/pglite";
-import { PgDialect } from "drizzle-orm/pg-core";
-import type { SQL } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/pglite";
 import {
-  createTransactionSql,
-  adjustBalanceSql,
+  insertTransaction,
+  updateBalance,
   type OwnedAccount,
-} from "@/db/mutations/financial-sql";
-import { getGoogleId } from "@/lib/google-identity";
-import {
-  dashboardSql,
-  type Activity,
-  type DashboardSnapshot,
-} from "@/db/queries/dashboard-sql";
-import { historySql } from "@/db/queries/history-sql";
+} from "@/db/mutations/financial-operations";
+import { resolveUser } from "@/db/queries/users";
+import { readDashboard } from "@/db/queries/overview";
+import { readHistory } from "@/db/queries/activity";
 import { localToday, toCents, fromCents, formatMoney } from "@/lib/financial";
 import {
   transactionCategories,
   type TransactionCategory,
 } from "@schemas/transaction/category";
-
-test("identidade usa providerUserId do Google, sem confundir com IDs do Clerk", () => {
-  assert.equal(
-    getGoogleId([
-      { provider: "oauth_google", providerUserId: "123456789012345678901" },
-    ]),
-    "123456789012345678901",
-  );
-  assert.equal(
-    getGoogleId([{ provider: "google", providerUserId: "123" }]),
-    "123",
-  );
-  assert.equal(
-    getGoogleId([{ provider: "oauth_github", providerUserId: "123" }]),
-    null,
-  );
-  assert.equal(
-    getGoogleId([{ provider: "google", providerUserId: " " }]),
-    null,
-  );
-  assert.equal(
-    getGoogleId([
-      { provider: "google", providerUserId: "1" },
-      { provider: "oauth_google", providerUserId: "2" },
-    ]),
-    null,
-  );
-});
 
 test("datas usam São Paulo e aritmética monetária preserva centavos e limites", () => {
   assert.equal(localToday(new Date("2026-10-25T01:30:00Z")), "2026-10-24");
@@ -63,17 +30,17 @@ test("datas usam São Paulo e aritmética monetária preserva centavos e limites
 
 test("migrations e mutations executam em PostgreSQL com isolamento, atomicidade e auditoria", async (t) => {
   const pg = new PGlite();
-  const dialect = new PgDialect();
-  const execute = async (query: SQL) => {
-    const built = dialect.sqlToQuery(query);
-    return pg.query(built.sql, built.params);
-  };
+  const db = drizzle({ client: pg });
+  const execute = async (operation: PromiseLike<{ id: string }[]>) => ({
+    rows: await operation,
+  });
   const accountId = randomUUID();
-  const legacyId = randomUUID();
+  const userA = "00000000-0000-4000-8000-000000000001";
+  const userB = "00000000-0000-4000-8000-000000000002";
   const account = async () =>
     (
       await pg.query<OwnedAccount>(
-        `select id, google_id as "googleId", clerk_user_id as "clerkUserId", balance::text, version from accounts where id = $1`,
+        `select id, user_id as "userId", balance::text, version from accounts where id = $1`,
         [accountId],
       )
     ).rows[0];
@@ -87,47 +54,59 @@ test("migrations e mutations executam em PostgreSQL com isolamento, atomicidade 
   });
   try {
     for (const directory of (await readdir("drizzle")).sort()) {
-      if (directory.endsWith("transaction-categories")) {
-        await pg.query(
-          "insert into accounts(id, clerk_user_id, google_id) values($1, 'legacy_clerk', 'legacy_google')",
-          [legacyId],
-        );
-        await pg.query(
-          "insert into transactions(account_id,google_id,request_id,type,amount,description,occurred_on) values($1,'legacy_google',$2,'expense',12.34,'Legado','2026-10-01')",
-          [legacyId, randomUUID()],
-        );
-      }
       await pg.exec(
         await readFile(`drizzle/${directory}/migration.sql`, "utf8"),
       );
     }
+    await pg.query(
+      "insert into users(id,provider_id) values ($1,'provider_a'),($2,'provider_b'),('00000000-0000-4000-8000-000000000003','provider_analytics')",
+      [userA, userB],
+    );
+    await pg.query("insert into accounts(currency,currency_configured_at,id,user_id) values ('BRL',now(),$1,$2)", [
+      accountId,
+      userA,
+    ]);
     await t.test(
-      "migration preserva transações existentes e preenche a categoria padrão",
+      "UUID interno é estável, único por provedor e desacoplado da autenticação",
       async () => {
-        const result = await pg.query<{ category: string }>(
-          "select category::text from transactions where account_id=$1",
-          [legacyId],
+        const resolved = await Promise.all(
+          [1, 2, 3].map(() => execute(resolveUser(db, "provider_new"))),
         );
-        assert.equal(result.rows[0].category, "other");
+        const ids = resolved.map(
+          (result) => (result.rows[0] as { id: string }).id,
+        );
+        assert.equal(new Set(ids).size, 1);
+        assert.match(ids[0], /^[0-9a-f-]{36}$/);
+        assert.notEqual(ids[0], "provider_new");
+        await pg.query(
+          "update users set provider_id='replacement_provider' where id=$1",
+          [userA],
+        );
+        const row = await execute(resolveUser(db, "replacement_provider"));
+        assert.equal((row.rows[0] as { id: string }).id, userA);
+        assert.equal((await account()).userId, userA);
         await assert.rejects(
-          pg.query(
-            "update transactions set category='invalid' where account_id=$1",
-            [legacyId],
-          ),
+          pg.query("insert into accounts(user_id) values($1)", [randomUUID()]),
+        );
+        await assert.rejects(
+          pg.query("insert into accounts(user_id) values($1)", [userA]),
+        );
+        const columns = await pg.query<{ column_name: string }>(
+          "select column_name from information_schema.columns where table_name in ('accounts','transactions','balance_adjustments','recurring_expenses')",
+        );
+        assert.equal(
+          columns.rows.some((row) => row.column_name === "provider_id"),
+          false,
         );
       },
-    );
-    await pg.query(
-      "insert into accounts(id, clerk_user_id, google_id) values ($1, $2, $3)",
-      [accountId, "clerk_test_a", "google_test_a"],
     );
     await t.test(
       "entrada e saída atualizam o saldo sem ponto flutuante",
       async () => {
-        await execute(createTransactionSql(await account(), entry("0.10")));
-        await execute(createTransactionSql(await account(), entry("0.20")));
+        await execute(insertTransaction(db, await account(), entry("0.10")));
+        await execute(insertTransaction(db, await account(), entry("0.20")));
         await execute(
-          createTransactionSql(await account(), entry("0.05", "expense")),
+          insertTransaction(db, await account(), entry("0.05", "expense")),
         );
         assert.equal((await account()).balance, "0.25");
       },
@@ -139,12 +118,13 @@ test("migrations e mutations executam em PostgreSQL com isolamento, atomicidade 
         const first = entry("1.00"),
           second = entry("2.00");
         const results = await Promise.all([
-          execute(createTransactionSql(snapshot, first)),
-          execute(createTransactionSql(snapshot, second)),
+          execute(insertTransaction(db, snapshot, first)),
+          execute(insertTransaction(db, snapshot, second)),
         ]);
         assert.equal(results.filter((result) => result.rows.length).length, 1);
         await execute(
-          createTransactionSql(
+          insertTransaction(
+            db,
             await account(),
             results[0].rows.length ? second : first,
           ),
@@ -156,9 +136,9 @@ test("migrations e mutations executam em PostgreSQL com isolamento, atomicidade 
       "falha por requestId duplicado reverte também a alteração de saldo",
       async () => {
         const input = entry("5.00");
-        await execute(createTransactionSql(await account(), input));
+        await execute(insertTransaction(db, await account(), input));
         const before = await account();
-        await assert.rejects(execute(createTransactionSql(before, input)));
+        await assert.rejects(execute(insertTransaction(db, before, input)));
         assert.deepEqual(await account(), before);
       },
     );
@@ -166,32 +146,14 @@ test("migrations e mutations executam em PostgreSQL com isolamento, atomicidade 
       "nenhum proprietário recebido de fora consegue movimentar a carteira",
       async () => {
         const before = await account();
-        assert.equal(
-          (
-            await execute(
-              createTransactionSql(
-                { ...before, googleId: "another_google" },
-                entry("500.00"),
-              ),
-            )
-          ).rows.length,
-          0,
-        );
-        assert.equal(
-          (
-            await execute(
-              createTransactionSql(
-                { ...before, clerkUserId: "another_clerk" },
-                entry("500.00"),
-              ),
-            )
-          ).rows.length,
-          0,
-        );
+        await assert.rejects(updateBalance(db, { ...before, userId: userB }, {
+          requestId: randomUUID(), balance: "500.00", reason: "Outro proprietário", expectedVersion: before.version,
+        }));
+        await assert.rejects(insertTransaction(db, { ...before, userId: userB }, entry("500.00")));
         await assert.rejects(
           pg.query(
-            "insert into transactions(account_id,google_id,request_id,type,amount,description,occurred_on) values($1,$2,$3,'income',10,'Invasão','2026-10-25')",
-            [accountId, "another_google", randomUUID()],
+            "insert into transactions(account_id,user_id,request_id,type,amount,description,occurred_on) values($1,$2,$3,'income',10,'Invasão','2026-10-25')",
+            [accountId, userB, randomUUID()],
           ),
         );
         assert.deepEqual(await account(), before);
@@ -202,7 +164,7 @@ test("migrations e mutations executam em PostgreSQL com isolamento, atomicidade 
       async () => {
         const before = await account();
         await execute(
-          adjustBalanceSql(before, {
+          updateBalance(db, before, {
             requestId: randomUUID(),
             balance: "-15.50",
             reason: "Conferência",
@@ -213,7 +175,7 @@ test("migrations e mutations executam em PostgreSQL com isolamento, atomicidade 
         assert.equal(
           (
             await execute(
-              adjustBalanceSql(before, {
+              updateBalance(db, before, {
                 requestId: randomUUID(),
                 balance: "999.00",
                 reason: "Formulário antigo",
@@ -225,7 +187,7 @@ test("migrations e mutations executam em PostgreSQL com isolamento, atomicidade 
         );
         const current = await account();
         await execute(
-          adjustBalanceSql(current, {
+          updateBalance(db, current, {
             requestId: randomUUID(),
             balance: "0.00",
             reason: "Zerar saldo",
@@ -256,7 +218,7 @@ test("migrations e mutations executam em PostgreSQL com isolamento, atomicidade 
         assert.equal(
           (
             await execute(
-              adjustBalanceSql(before, {
+              updateBalance(db, before, {
                 requestId: randomUUID(),
                 balance: before.balance,
                 reason: "Sem mudança",
@@ -287,46 +249,31 @@ test("migrations e mutations executam em PostgreSQL com isolamento, atomicidade 
       async () => {
         const otherId = randomUUID();
         await pg.query(
-          "insert into accounts(id, clerk_user_id, google_id) values ($1,'clerk_b','google_b')",
+          "insert into accounts(currency,currency_configured_at,id,user_id) values ('BRL',now(),$1,'00000000-0000-4000-8000-000000000002')",
           [otherId],
         );
         await execute(
-          createTransactionSql(
+          insertTransaction(
+            db,
             {
               id: otherId,
-              clerkUserId: "clerk_b",
-              googleId: "google_b",
+              userId: userB,
               balance: "0.00",
               version: 0,
             },
             entry("9000.00"),
           ),
         );
-        const built = dialect.sqlToQuery(
-          dashboardSql(accountId, "google_test_a", "2026-10"),
-        );
-        const result = await pg.query<{
-          income: string;
-          expense: string;
-          count: number;
-          lastActivity: Activity | null;
-          balance: string;
-        }>(built.sql, built.params);
+        const result = {
+          rows: [await readDashboard(db, accountId, userA, "2026-10")],
+        };
         assert.equal(result.rows[0].income, "8.30");
         assert.equal(result.rows[0].expense, "0.05");
         assert.equal(result.rows[0].count, 6);
         assert.equal(result.rows[0].balance, "0.00");
         assert.ok(result.rows[0].lastActivity?.id);
         assert.equal("activity" in result.rows[0], false);
-        const wrongOwner = dialect.sqlToQuery(
-          dashboardSql(accountId, "google_b", "2026-10"),
-        );
-        const denied = await pg.query<{
-          count: number;
-          lastActivity: Activity | null;
-        }>(wrongOwner.sql, wrongOwner.params);
-        assert.equal(denied.rows[0].count, 0);
-        assert.equal(denied.rows[0].lastActivity, null);
+        await assert.rejects(readDashboard(db, accountId, userB, "2026-10"));
       },
     );
     await t.test(
@@ -334,7 +281,7 @@ test("migrations e mutations executam em PostgreSQL com isolamento, atomicidade 
       async () => {
         for (let index = 0; index < 25; index++) {
           await execute(
-            createTransactionSql(await account(), {
+            insertTransaction(db, await account(), {
               ...entry("0.01"),
               description: `Registro ${index}`,
             }),
@@ -344,22 +291,16 @@ test("migrations e mutations executam em PostgreSQL com isolamento, atomicidade 
           page: number,
           query = "Registro",
           type: "all" | "income" | "expense" | "adjustment" = "all",
-          googleId = "google_test_a",
+          userId = userA,
+          category: "all" | TransactionCategory = "all",
         ) => {
-          const built = dialect.sqlToQuery(
-            historySql(accountId, googleId, {
-              month: "2026-10",
-              page,
-              query,
-              type,
-            }),
-          );
-          return (
-            await pg.query<{ total: number; activity: Activity[] }>(
-              built.sql,
-              built.params,
-            )
-          ).rows[0];
+          return readHistory(db, accountId, userId, {
+            month: "2026-10",
+            page,
+            query,
+            type,
+            category,
+          });
         };
         const first = await getPage(1),
           second = await getPage(2);
@@ -372,17 +313,31 @@ test("migrations e mutations executam em PostgreSQL com isolamento, atomicidade 
           25,
         );
         assert.equal((await getPage(1, "Registro", "expense")).total, 0);
-        assert.deepEqual(
-          (await getPage(1, "Registro", "all", "google_b")).activity,
-          [],
-        );
+        await assert.rejects(getPage(1, "Registro", "all", userB));
         await execute(
-          createTransactionSql(await account(), {
+          insertTransaction(db, await account(), {
             ...entry("0.01"),
             description: "Teste literal %_",
           }),
         );
         assert.equal((await getPage(1, "%_")).total, 1);
+        for (const type of ["income", "expense", "expense"] as const) {
+          await execute(insertTransaction(db, await account(), {
+            ...entry("1.00", type), category: "food", description: "Registro alimentação",
+          }));
+        }
+        const food = await getPage(1, "Registro", "all", userA, "food");
+        assert.equal(food.total, 3);
+        assert.ok(food.activity.every(row => row.category === "food"));
+        assert.equal((await getPage(1, "Registro", "expense", userA, "food")).total, 2);
+        assert.equal((await getPage(1, "inexistente", "all", userA, "food")).total, 0);
+        assert.equal((await getPage(1, "", "adjustment", userA, "food")).total, 0);
+        const otherFirst = await getPage(1, "Registro", "all", userA, "other");
+        const otherSecond = await getPage(2, "Registro", "all", userA, "other");
+        assert.equal(otherFirst.total, 25);
+        assert.equal(otherFirst.activity.length, 20);
+        assert.equal(otherSecond.activity.length, 5);
+        await assert.rejects(getPage(1, "", "all", userB, "food"));
       },
     );
     await t.test(
@@ -390,7 +345,7 @@ test("migrations e mutations executam em PostgreSQL com isolamento, atomicidade 
       async () => {
         const id = randomUUID();
         await pg.query(
-          "insert into accounts(id, clerk_user_id, google_id) values($1,'analytics_clerk','analytics_google')",
+          "insert into accounts(currency,currency_configured_at,id,user_id) values ('BRL',now(),$1,'00000000-0000-4000-8000-000000000003')",
           [id],
         );
         const expenses: [TransactionCategory, string][] = [
@@ -403,7 +358,7 @@ test("migrations e mutations executam em PostgreSQL com isolamento, atomicidade 
         ];
         for (const [category, amount] of expenses) {
           await pg.query(
-            "insert into transactions(account_id,google_id,request_id,type,category,amount,description,occurred_on) values($1,'analytics_google',$2,'expense',$3::text::transaction_category,$4,$3::text,'2026-10-10')",
+            "insert into transactions(account_id,user_id,request_id,type,category,amount,description,occurred_on) values($1,'00000000-0000-4000-8000-000000000003',$2,'expense',$3::text::transaction_category,$4,$3::text,'2026-10-10')",
             [id, randomUUID(), category, amount],
           );
         }
@@ -416,20 +371,20 @@ test("migrations e mutations executam em PostgreSQL com isolamento, atomicidade 
           ["expense", "999.00", "2026-11-05"],
         ]) {
           await pg.query(
-            "insert into transactions(account_id,google_id,request_id,type,amount,description,occurred_on) values($1,'analytics_google',$2,$3,$4,'Fixture',$5)",
+            "insert into transactions(account_id,user_id,request_id,type,amount,description,occurred_on) values($1,'00000000-0000-4000-8000-000000000003',$2,$3,$4,'Fixture',$5)",
             [id, randomUUID(), type, amount, day],
           );
         }
         await pg.query(
-          "insert into balance_adjustments(account_id,google_id,request_id,previous_balance,new_balance,reason) values($1,'analytics_google',$2,0,50000,'Ajuste')",
+          "insert into balance_adjustments(account_id,user_id,request_id,previous_balance,new_balance,reason) values($1,'00000000-0000-4000-8000-000000000003',$2,0,50000,'Ajuste')",
           [id, randomUUID()],
         );
-        const query = dialect.sqlToQuery(
-          dashboardSql(id, "analytics_google", "2026-10"),
+        const data = await readDashboard(
+          db,
+          id,
+          "00000000-0000-4000-8000-000000000003",
+          "2026-10",
         );
-        const data = (
-          await pg.query<DashboardSnapshot>(query.sql, query.params)
-        ).rows[0];
         assert.equal(data.expense, "1675.00");
         assert.equal(data.income, "2200.00");
         assert.equal(data.previousExpense, "1500.00");
@@ -458,15 +413,7 @@ test("migrations e mutations executam em PostgreSQL com isolamento, atomicidade 
           data.chart.map((row) => row.month),
           ["2026-08", "2026-09", "2026-10"],
         );
-        const deniedQuery = dialect.sqlToQuery(
-          dashboardSql(id, "google_test_a", "2026-10"),
-        );
-        const denied = (
-          await pg.query<DashboardSnapshot>(deniedQuery.sql, deniedQuery.params)
-        ).rows[0];
-        assert.deepEqual(denied.categories, []);
-        assert.deepEqual(denied.topExpenses, []);
-        assert.equal(denied.previousExpense, "0");
+        await assert.rejects(readDashboard(db, id, userA, "2026-10"));
       },
     );
   } finally {

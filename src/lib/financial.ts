@@ -1,6 +1,6 @@
-export function localToday(now = new Date()): string {
+export function localToday(now = new Date(), timeZone = "America/Sao_Paulo"): string {
   return new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/Sao_Paulo",
+    timeZone,
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
@@ -36,17 +36,21 @@ export function fromCents(value: bigint): string {
   return `${value < BigInt(0) ? "-" : ""}${absolute / BigInt(100)}.${String(absolute % BigInt(100)).padStart(2, "0")}`;
 }
 
-export function formatMoney(value: string): string {
+export function formatMoney(value: string, currency = "BRL", locale = "pt-BR"): string {
   const cents = toCents(value);
   const absolute = cents < BigInt(0) ? -cents : cents;
-  const integer = (absolute / BigInt(100)).toLocaleString("pt-BR");
-  return `${cents < BigInt(0) ? "− " : ""}R$ ${integer},${String(absolute % BigInt(100)).padStart(2, "0")}`;
+  const integer = (absolute / BigInt(100)).toLocaleString(locale);
+  const decimal = new Intl.NumberFormat(locale).formatToParts(1.1).find(p => p.type === "decimal")!.value;
+  const symbol = currency === "BRL" ? "R$" : currency;
+  return `${cents < BigInt(0) ? "− " : ""}${symbol} ${integer}${decimal}${String(absolute % BigInt(100)).padStart(2, "0")}`;
 }
 
-export function formatDay(value: string): string {
-  return new Intl.DateTimeFormat("pt-BR", {
+export function formatDay(value: string, locale = "pt-BR"): string {
+  return new Intl.DateTimeFormat(locale, {
+    weekday: "long",
     day: "2-digit",
     month: "short",
+    year: "numeric",
     timeZone: "UTC",
   }).format(new Date(`${value.slice(0, 10)}T12:00:00Z`));
 }

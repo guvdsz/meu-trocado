@@ -3,3 +3,5 @@ allowBuilds:
   esbuild: false
   sharp: false
   unrs-resolver: false
+patchedDependencies:
+  '@clerk/ui@1.41.2': patches/@clerk__ui@1.41.2.patch

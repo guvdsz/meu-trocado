@@ -270,7 +270,7 @@ test("loader animado respeita preferência de movimento reduzido", async ({
     await page
       .locator(".spinner")
       .evaluate((element) => getComputedStyle(element).animationName),
-  ).toBe("finance-spin");
+  ).toBe("spin");
   await page.emulateMedia({ reducedMotion: "reduce" });
   expect(
     await page

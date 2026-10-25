@@ -1,0 +1,494 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "968ebc23-8576-4a35-81c6-d952e9f5e0e3",
+  "prevIds": [
+    "df79c8d0-2821-4a75-ac5f-959ed9ddd3a3"
+  ],
+  "footprints": [
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "account_settings_requests"
+      ],
+      "writes": [
+        "s|tbl|public.account_settings_requests",
+        "n|tbl|public.account_settings_requests",
+        "e|tbl|public.account_settings_requests",
+        "n|rel|public.account_settings_requests",
+        "n|type|public.account_settings_requests",
+        "n|rel|public.account_settings_requests_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "drop_check",
+      "statementTarget": [
+        "table",
+        "public",
+        "accounts"
+      ],
+      "writes": [
+        "s|ck|public.accounts.accounts_currency_brl",
+        "n|ck|public.accounts.accounts_currency_brl",
+        "e|ck|public.accounts.accounts_currency_brl",
+        "n|con|public.accounts.accounts_currency_brl"
+      ],
+      "reads": [
+        "n|tbl|public.accounts",
+        "n|sch|public",
+        "e|col|public.accounts.currency"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "accounts",
+        "currency_configured_at"
+      ],
+      "writes": [
+        "s|col|public.accounts.currency_configured_at",
+        "n|col|public.accounts.currency_configured_at",
+        "e|col|public.accounts.currency_configured_at"
+      ],
+      "reads": [
+        "n|tbl|public.accounts",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "accounts",
+        "time_zone"
+      ],
+      "writes": [
+        "s|col|public.accounts.time_zone",
+        "n|col|public.accounts.time_zone",
+        "e|col|public.accounts.time_zone"
+      ],
+      "reads": [
+        "n|tbl|public.accounts",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "accounts",
+        "locale"
+      ],
+      "writes": [
+        "s|col|public.accounts.locale",
+        "n|col|public.accounts.locale",
+        "e|col|public.accounts.locale"
+      ],
+      "reads": [
+        "n|tbl|public.accounts",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "accounts",
+        "settings_version"
+      ],
+      "writes": [
+        "s|col|public.accounts.settings_version",
+        "n|col|public.accounts.settings_version",
+        "e|col|public.accounts.settings_version"
+      ],
+      "reads": [
+        "n|tbl|public.accounts",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "alter_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "accounts",
+        "currency"
+      ],
+      "writes": [
+        "s|colprop|public.accounts.currency.notNull",
+        "s|colprop|public.accounts.currency.default"
+      ],
+      "reads": [
+        "n|tbl|public.accounts",
+        "n|sch|public",
+        "n|col|public.accounts.currency"
+      ],
+      "sqlHash": "d8542a70814dd3ed"
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "account_settings_requests"
+      ],
+      "writes": [
+        "s|fk|public.account_settings_requests.account_settings_requests_account_id_accounts_id_fkey",
+        "n|fk|public.account_settings_requests.account_settings_requests_account_id_accounts_id_fkey",
+        "e|fk|public.account_settings_requests.account_settings_requests_account_id_accounts_id_fkey",
+        "n|con|public.account_settings_requests.account_settings_requests_account_id_accounts_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.account_settings_requests",
+        "n|sch|public",
+        "n|tbl|public.accounts",
+        "n|sch|public",
+        "n|col|public.account_settings_requests.account_id",
+        "n|col|public.accounts.id",
+        "e|uniqueness|public.accounts.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "account_settings_requests"
+      ],
+      "writes": [
+        "s|fk|public.account_settings_requests.account_settings_requests_user_id_users_id_fkey",
+        "n|fk|public.account_settings_requests.account_settings_requests_user_id_users_id_fkey",
+        "e|fk|public.account_settings_requests.account_settings_requests_user_id_users_id_fkey",
+        "n|con|public.account_settings_requests.account_settings_requests_user_id_users_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.account_settings_requests",
+        "n|sch|public",
+        "n|tbl|public.users",
+        "n|sch|public",
+        "n|col|public.account_settings_requests.user_id",
+        "n|col|public.users.id",
+        "e|uniqueness|public.users.id"
+      ]
+    },
+    {
+      "statementType": "add_check",
+      "statementTarget": [
+        "table",
+        "public",
+        "accounts"
+      ],
+      "writes": [
+        "s|ck|public.accounts.accounts_currency_supported",
+        "n|ck|public.accounts.accounts_currency_supported",
+        "e|ck|public.accounts.accounts_currency_supported",
+        "n|con|public.accounts.accounts_currency_supported"
+      ],
+      "reads": [
+        "n|tbl|public.accounts",
+        "n|sch|public",
+        "n|col|public.accounts.currency"
+      ]
+    },
+    {
+      "statementType": "add_check",
+      "statementTarget": [
+        "table",
+        "public",
+        "accounts"
+      ],
+      "writes": [
+        "s|ck|public.accounts.accounts_currency_confirmation",
+        "n|ck|public.accounts.accounts_currency_confirmation",
+        "e|ck|public.accounts.accounts_currency_confirmation",
+        "n|con|public.accounts.accounts_currency_confirmation"
+      ],
+      "reads": [
+        "n|tbl|public.accounts",
+        "n|sch|public",
+        "n|col|public.accounts.currency_configured_at",
+        "n|col|public.accounts.currency"
+      ]
+    },
+    {
+      "statementType": "add_check",
+      "statementTarget": [
+        "table",
+        "public",
+        "accounts"
+      ],
+      "writes": [
+        "s|ck|public.accounts.accounts_settings_version_non_negative",
+        "n|ck|public.accounts.accounts_settings_version_non_negative",
+        "e|ck|public.accounts.accounts_settings_version_non_negative",
+        "n|con|public.accounts.accounts_settings_version_non_negative"
+      ],
+      "reads": [
+        "n|tbl|public.accounts",
+        "n|sch|public",
+        "n|col|public.accounts.settings_version"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "account_settings_requests",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "accounts",
+        "name": "currency_configured_at",
+        "type": "timestamp with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "accounts",
+        "name": "time_zone",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "'America/Sao_Paulo'",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "accounts",
+        "name": "locale",
+        "type": "varchar(10)",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "'pt-BR'",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "accounts",
+        "name": "settings_version",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "0",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "account_settings_requests",
+        "name": "request_id",
+        "type": "uuid",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "account_settings_requests",
+        "name": "account_id",
+        "type": "uuid",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "account_settings_requests",
+        "name": "user_id",
+        "type": "uuid",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "account_settings_requests",
+        "name": "payload",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "account_settings_requests",
+        "name": "created_at",
+        "type": "timestamp with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "account_settings_requests",
+        "name": "account_settings_requests_account_id_accounts_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "account_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "accounts",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "NO ACTION",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "account_settings_requests",
+        "name": "account_settings_requests_user_id_users_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "user_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "users",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "NO ACTION",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "account_settings_requests",
+        "name": "account_settings_requests_pkey",
+        "columns": [
+          "request_id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "accounts",
+        "name": "accounts_currency_supported",
+        "value": "\"currency\" in ('BRL','USD','EUR','GBP','CAD','AUD')",
+        "entityType": "checks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "accounts",
+        "name": "accounts_currency_confirmation",
+        "value": "\"currency_configured_at\" is null or \"currency\" is not null",
+        "entityType": "checks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "accounts",
+        "name": "accounts_settings_version_non_negative",
+        "value": "\"settings_version\" >= 0",
+        "entityType": "checks"
+      }
+    },
+    {
+      "op": "drop",
+      "key": "checks\u0000[\"public\",\"accounts\",\"accounts_currency_brl\"]"
+    },
+    {
+      "op": "alter",
+      "key": "columns\u0000[\"public\",\"accounts\",\"currency\"]",
+      "set": {
+        "notNull": false,
+        "default": null
+      }
+    }
+  ]
+}

@@ -4,6 +4,16 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { adjustBalanceSchema } from "@schemas/account/adjust-balance";
 import { moneySchema, positiveMoneySchema } from "@schemas/shared/money";
 import { createTransactionSchema } from "@schemas/transaction/create-transaction";
+import { historyFiltersSchema } from "@schemas/transaction/history-filters";
+
+test("filtro de categoria aceita categorias conhecidas e usa todas para parâmetros ausentes ou inválidos", () => {
+  for (const category of [undefined, "invalid", ["food", "salary"], ""]) {
+    assert.equal(historyFiltersSchema.parse({ category }).category, "all");
+  }
+  assert.equal(historyFiltersSchema.parse({ category: "all" }).category, "all");
+  assert.equal(historyFiltersSchema.parse({ category: "food" }).category, "food");
+  assert.equal(historyFiltersSchema.parse({ category: "other" }).category, "other");
+});
 
 const transaction = {
   requestId: "73a19904-3547-4ad9-8c32-542228839add",
@@ -109,6 +119,7 @@ test("ajuste exige motivo, chave da operação e versão válida; permite zerar 
   };
   assert.deepEqual(adjustBalanceSchema.parse(adjustment), {
     ...adjustment,
+    expectedSettingsVersion: 0,
     balance: "-100.50",
     reason: "Conferência do saldo",
   });

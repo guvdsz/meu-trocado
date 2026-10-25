@@ -11,23 +11,21 @@ const css = (
     cssFiles.map((file) => readFile(`.next/static/chunks/${file}`, "utf8")),
   )
 ).join("\n");
-const productionJavascript = (
-  await Promise.all(
-    chunkFiles
-      .filter((file) => file.endsWith(".js"))
-      .map((file) => readFile(`.next/static/chunks/${file}`, "utf8")),
-  )
-).join("\n");
 
 const storeModule = `
 import {useSyncExternalStore} from 'react';
 export const today='2026-10-25';
 let signedOut=false;
+let preferences={currency:new URLSearchParams(location.search).get('currency')??'BRL',configured:!new URLSearchParams(location.search).has('unconfigured'),timeZone:'America/Sao_Paulo',locale:new URLSearchParams(location.search).get('locale')??'pt-BR',settingsVersion:0};
+let recurrences=[{id:'00000000-0000-4000-8000-000000000001',description:'Assinatura de internet',amount:'99.90',category:'bills',frequency:'monthly',startsOn:'2026-10-25',nextDueOn:'2026-11-25',version:1,endedAt:null}];
 let rows=Array.from({length:26},(_,i)=>({id:'fixture-'+i,type:i===1?'adjustment':i%3===0?'income':'expense',category:i===1?null:i%3===0?'salary':['food','housing','transport','leisure','other'][i%5],description:i===0?'Último registro demonstrativo':i===1?'Conferência de saldo':'Registro '+String(i+1),amount:i===1?'4000.00':i%3===0?'500.00':'25.50',day:'2026-10-'+String(24-Math.floor(i/2)).padStart(2,'0'),newBalance:i===1?'4000.00':null}));
 let revision=0;const listeners=new Set();
 export function emit(){revision++;for(const listener of listeners)listener()}
-export function useFixture(){useSyncExternalStore((listener)=>{listeners.add(listener);return()=>listeners.delete(listener)},()=>revision);return {rows,signedOut}}
-export async function createTransactionAction(input){await new Promise(resolve=>setTimeout(resolve,600));rows=[{id:input.requestId,type:input.type,category:input.category??'other',description:input.description,amount:input.amount,day:input.occurredOn,newBalance:null},...rows];emit();return {success:true}}
+export function useFixture(){useSyncExternalStore((listener)=>{listeners.add(listener);return()=>listeners.delete(listener)},()=>revision);return {rows,signedOut,recurrences,preferences}}
+export async function saveSettingsAction(input){await new Promise(resolve=>setTimeout(resolve,250));if(new URLSearchParams(location.search).has('settingsError'))return {success:false,message:'Não foi possível salvar. Tente novamente.'};if(input.currency!==preferences.currency&&preferences.currency){if(!input.confirmReset)return {success:false,message:'Confirme a exclusão.'};rows=[];recurrences=[];}preferences={...preferences,...input,configured:true,settingsVersion:preferences.settingsVersion+1};emit();return {success:true,message:'Configurações salvas.'}}
+export async function createTransactionAction(input){await new Promise(resolve=>setTimeout(resolve,600));if(input.repeat&&input.repeat!=='none'){recurrences=[...recurrences,{id:input.requestId,description:input.description,amount:input.amount,category:input.category,frequency:input.repeat,startsOn:input.occurredOn,nextDueOn:input.occurredOn,version:0,endedAt:null}]}if(input.occurredOn<=today)rows=[{id:input.requestId,type:input.type,category:input.category??'other',description:input.description,amount:input.amount,day:input.occurredOn,newBalance:null},...rows];emit();return {success:true}}
+export async function updateRecurrenceAction(input){await new Promise(resolve=>setTimeout(resolve,400));recurrences=recurrences.map(item=>item.id===input.id?{...item,...input,version:item.version+1}:item);emit();return {success:true}}
+export async function endRecurrenceAction(input){await new Promise(resolve=>setTimeout(resolve,400));recurrences=recurrences.filter(item=>item.id!==input.id);emit();return {success:true}}
 export async function adjustBalanceAction(input){await new Promise(resolve=>setTimeout(resolve,600));rows=[{id:input.requestId,type:'adjustment',description:input.reason,amount:'0.00',day:today,newBalance:input.balance},...rows];emit();return {success:true}}
 export function useClerk(){return {async signOut(){signedOut=true;emit()},openUserProfile(){}}}
 export function usePathname(){useSyncExternalStore((listener)=>{listeners.add(listener);return()=>listeners.delete(listener)},()=>revision);return location.pathname}
@@ -38,23 +36,26 @@ import React from 'react';import {createRoot} from 'react-dom/client';
 import {AppShell} from './src/app/(private)/_components/app-shell';
 import {Dashboard} from './src/app/(private)/_components/dashboard';
 import {HistoryScreen} from './src/app/(private)/transactions/_components/history-screen';
+import {RecurrencesScreen} from './src/app/(private)/recurrences/_components/recurrences-screen';
 import {PageSkeleton} from './src/app/(private)/_components/data-skeleton';
 import Loader from './src/app/_components/shared/loader';
 import {Toaster} from './src/app/_components/ui/toast';
 import {PwaProvider} from './src/app/_components/pwa/pwa-provider';
 import {UnavailableState} from './src/app/_components/shared/unavailable-state';
 import {useFixture,today} from 'preview-store';
-function App(){const {rows,signedOut}=useFixture();if(signedOut)return <main><h1>Sessão encerrada</h1></main>;if(location.pathname==='/loader')return <Loader/>;
-const params=new URLSearchParams(location.search);const month=params.get('month')??'2026-10';const page=Number(params.get('page')??1);const type=params.get('type')??'all';const query=params.get('q')??'';
-const filtered=rows.filter(row=>row.day.startsWith(month)&&(type==='all'||type===row.type)&&row.description.toLocaleLowerCase('pt-BR').includes(query.toLocaleLowerCase('pt-BR')));
-const data={balance:'4280.50',version:2,account:{balance:'4280.50',version:2},income:'6500.00',expense:'2219.50',count:rows.length,lastActivity:rows[0],chart:[{month:'2026-05',income:'4200.00',expense:'2700.00'},{month:'2026-06',income:'4800.00',expense:'3400.00'},{month:'2026-07',income:'4400.00',expense:'2900.00'},{month:'2026-08',income:'5300.00',expense:'3500.00'},{month:'2026-09',income:'5100.00',expense:'3900.00'},{month:'2026-10',income:'6500.00',expense:'2219.50'}]};
+import {PreferencesProvider} from './src/app/(private)/_components/preferences-context';
+import {SettingsForm} from './src/app/(private)/settings/_components/settings-form';
+function App(){const {rows,signedOut,recurrences,preferences}=useFixture();if(signedOut)return <main><h1>Sessão encerrada</h1></main>;if(location.pathname==='/loader')return <Loader/>;
+const params=new URLSearchParams(location.search);const month=params.get('month')??'2026-10';const page=Number(params.get('page')??1);const type=params.get('type')??'all';const query=params.get('q')??'';const category=params.get('category')??'all';
+const filtered=rows.filter(row=>row.day.startsWith(month)&&(type==='all'||type===row.type)&&(category==='all'||category===row.category)&&row.description.toLocaleLowerCase('pt-BR').includes(query.toLocaleLowerCase('pt-BR')));
+const data={balance:'4280.50',version:2,account:{balance:rows.length?'4280.50':'0.00',version:2,...preferences},income:'6500.00',expense:'2219.50',count:rows.length,lastActivity:rows[0],chart:[{month:'2026-05',income:'4200.00',expense:'2700.00'},{month:'2026-06',income:'4800.00',expense:'3400.00'},{month:'2026-07',income:'4400.00',expense:'2900.00'},{month:'2026-08',income:'5300.00',expense:'3500.00'},{month:'2026-09',income:'5100.00',expense:'3900.00'},{month:'2026-10',income:'6500.00',expense:'2219.50'}]};
 data.categories=[{category:'housing',amount:'1200.00'},{category:'food',amount:'600.00'},{category:'transport',amount:'250.00'},{category:'leisure',amount:'100.00'},{category:'other',amount:'69.50'}];
 data.previousExpense='1969.50';
 data.topExpenses=[{id:'top-1',description:'Aluguel',amount:'1200.00',category:'housing',day:today},{id:'top-2',description:'Mercado',amount:'350.00',category:'food',day:today},{id:'top-3',description:'Restaurante',amount:'250.00',category:'food',day:today},{id:'top-4',description:'Transporte',amount:'150.00',category:'transport',day:today},{id:'top-5',description:'Cinema',amount:'100.00',category:'leisure',day:today}];
 if(params.has('single')){Object.assign(data,{income:'0.00',expense:'123.00',previousExpense:'0.00',categories:[{category:'other',amount:'123.00'}],topExpenses:[{id:'single',description:'Compra do mês',amount:'123.00',category:'other',day:today}],chart:[{month:'2026-10',income:'0.00',expense:'123.00'}]})}
 if(params.has('empty')){Object.assign(data,{income:'0.00',expense:'0.00',previousExpense:'0.00',categories:[],topExpenses:[],lastActivity:null,count:0,chart:[]})}
 if(params.has('error'))return <AppShell name='Gustavo' email='example@example.test'><UnavailableState title={location.pathname==='/transactions'?'Não foi possível carregar o histórico':'Não foi possível carregar seu resumo'} retry={()=>{history.replaceState({},'',location.pathname);location.reload()}}/></AppShell>;
-return <Toaster timeout={3500}><AppShell name='Gustavo' email='um.email.demonstrativo.com.nome.muito.grande@example.test'>{location.pathname==='/transactions'?(params.has('loading')?<PageSkeleton history/>:<HistoryScreen data={{total:filtered.length,activity:filtered.slice((page-1)*20,page*20),account:data.account}} filters={{month,type,query,page}} today={today}/>):<Dashboard data={data} name='Gustavo' today={today} month={month}/>}</AppShell></Toaster>}
+return <Toaster timeout={3500}><PreferencesProvider preferences={preferences}><AppShell name='Gustavo' email='um.email.demonstrativo.com.nome.muito.grande@example.test'>{!preferences.configured?<SettingsForm mandatory/>:location.pathname==='/settings'?<SettingsForm key={preferences.settingsVersion}/>:location.pathname==='/recurrences'?<RecurrencesScreen recurrences={recurrences} account={data.account} today={today}/>:location.pathname==='/transactions'?(params.has('loading')?<PageSkeleton history/>:<HistoryScreen data={{total:filtered.length,activity:filtered.slice((page-1)*20,page*20),account:data.account}} filters={{month,type,category,query,page}} today={today}/>):<Dashboard data={data} name='Gustavo' today={today} month={month}/>}</AppShell></PreferencesProvider></Toaster>}
 createRoot(document.getElementById('root')).render(<PwaProvider><App/></PwaProvider>);
 `;
 const compiled = await build({
@@ -69,41 +70,10 @@ const compiled = await build({
     {
       name: "test-fixtures",
       setup(builder) {
-        // Use Next's actual class exports and CSS; rebuilding modules with esbuild
-        // would hide errors in the application's Turbopack loader configuration.
-        builder.onLoad({ filter: /\.module\.css$/ }, async ({ path }) => {
-          const source = await readFile(path, "utf8");
-          const names = new Set(
-            [...source.matchAll(/\.([a-zA-Z_][\w-]*)/g)].map(
-              (match) => match[1],
-            ),
-          );
-          const mapping = {};
-          for (const name of names) {
-            const exports = new Set(
-              [
-                ...productionJavascript.matchAll(
-                  new RegExp(`\\b${name}:"([\\w-]+_${name})"`, "g"),
-                ),
-              ]
-                .map((match) => match[1])
-                .filter((token) => css.includes(`.${token}`)),
-            );
-            if (exports.size !== 1)
-              throw new Error(
-                `Missing or ambiguous Next.js CSS Module export: ${path} (${name}). Run pnpm build and check the CSS loader configuration.`,
-              );
-            mapping[name] = [...exports][0];
-          }
-          return {
-            contents: `export default ${JSON.stringify(mapping)}`,
-            loader: "js",
-          };
-        });
         builder.onResolve(
           {
             filter:
-              /^preview-store$|^@clerk\/nextjs$|^next\/navigation$|^next\/link$|_actions\/(create-transaction|adjust-balance)$/,
+              /^preview-store$|^@clerk\/nextjs$|^next\/navigation$|^next\/link$|_actions\/(create-transaction|adjust-balance|manage-recurrence|save-settings)$/,
           },
           (args) => ({
             path: args.path === "next/link" ? "link" : "store",

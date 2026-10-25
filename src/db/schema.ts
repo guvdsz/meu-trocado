@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import { transactionCategories } from "../../schemas/transaction/category";
+import { recurrenceFrequencies } from "../../schemas/recurrence/frequency";
 import {
   check,
   date,
@@ -24,14 +25,41 @@ export const transactionCategory = pgEnum(
   "transaction_category",
   transactionCategories,
 );
+export const recurrenceFrequency = pgEnum(
+  "recurrence_frequency",
+  recurrenceFrequencies,
+);
+
+export const users = pgTable(
+  "users",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    providerId: text("provider_id").notNull().unique(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    check(
+      "users_provider_id_not_empty",
+      sql`length(btrim(${table.providerId})) > 0`,
+    ),
+  ],
+);
 
 export const accounts = pgTable(
   "accounts",
   {
     id: uuid("id").defaultRandom().primaryKey(),
-    clerkUserId: text("clerk_user_id").notNull().unique(),
-    googleId: text("google_id").notNull().unique(),
-    currency: varchar("currency", { length: 3 }).notNull().default("BRL"),
+    userId: uuid("user_id")
+      .notNull()
+      .unique()
+      .references(() => users.id, { onDelete: "restrict" }),
+    currency: varchar("currency", { length: 3 }),
+    currencyConfiguredAt: timestamp("currency_configured_at", { withTimezone: true }),
+    timeZone: text("time_zone").notNull().default("America/Sao_Paulo"),
+    locale: varchar("locale", { length: 10 }).notNull().default("pt-BR"),
+    settingsVersion: integer("settings_version").notNull().default(0),
     balance: numeric("balance", { precision: 15, scale: 2 })
       .notNull()
       .default("0.00"),
@@ -44,16 +72,10 @@ export const accounts = pgTable(
       .defaultNow(),
   },
   (table) => [
-    unique("accounts_id_google_id_unique").on(table.id, table.googleId),
-    check(
-      "accounts_google_id_not_empty",
-      sql`length(btrim(${table.googleId})) > 0`,
-    ),
-    check("accounts_currency_brl", sql`${table.currency} = 'BRL'`),
-    check(
-      "accounts_owner_not_empty",
-      sql`length(btrim(${table.clerkUserId})) > 0`,
-    ),
+    unique("accounts_id_user_id_unique").on(table.id, table.userId),
+    check("accounts_currency_supported", sql`${table.currency} in ('BRL','USD','EUR','GBP','CAD','AUD')`),
+    check("accounts_currency_confirmation", sql`${table.currencyConfiguredAt} is null or ${table.currency} is not null`),
+    check("accounts_settings_version_non_negative", sql`${table.settingsVersion} >= 0`),
     check("accounts_version_non_negative", sql`${table.version} >= 0`),
     check(
       "accounts_balance_range",
@@ -62,12 +84,66 @@ export const accounts = pgTable(
   ],
 );
 
+export const recurringExpenses = pgTable(
+  "recurring_expenses",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    accountId: uuid("account_id").notNull(),
+    userId: uuid("user_id").notNull(),
+    requestId: uuid("request_id").notNull().unique(),
+    creationHash: varchar("creation_hash", { length: 64 }).notNull(),
+    description: varchar("description", { length: 160 }).notNull(),
+    amount: numeric("amount", { precision: 15, scale: 2 }).notNull(),
+    category: transactionCategory("category").notNull().default("other"),
+    frequency: recurrenceFrequency("frequency").notNull(),
+    startsOn: date("starts_on", { mode: "string" }).notNull(),
+    nextDueOn: date("next_due_on", { mode: "string" }).notNull(),
+    nextOccurrence: integer("next_occurrence").notNull().default(0),
+    version: integer("version").notNull().default(0),
+    endedAt: timestamp("ended_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    foreignKey({
+      name: "recurring_expenses_owner_fk",
+      columns: [table.accountId, table.userId],
+      foreignColumns: [accounts.id, accounts.userId],
+    }).onDelete("restrict"),
+    unique("recurring_expenses_id_owner_unique").on(
+      table.id,
+      table.accountId,
+      table.userId,
+    ),
+    check(
+      "recurring_amount_positive",
+      sql`${table.amount} between 0.01 and 9999999999999.99`,
+    ),
+    check(
+      "recurring_description_not_empty",
+      sql`length(btrim(${table.description})) > 0`,
+    ),
+    check(
+      "recurring_progress_valid",
+      sql`${table.nextOccurrence} >= 0 and ${table.version} >= 0 and ${table.nextDueOn} >= ${table.startsOn}`,
+    ),
+    index("recurring_expenses_due_idx")
+      .on(table.nextDueOn)
+      .where(sql`${table.endedAt} is null`),
+    index("recurring_expenses_account_idx").on(table.accountId, table.userId),
+  ],
+);
+
 export const transactions = pgTable(
   "transactions",
   {
     id: uuid("id").defaultRandom().primaryKey(),
     accountId: uuid("account_id").notNull(),
-    googleId: text("google_id").notNull(),
+    userId: uuid("user_id").notNull(),
     requestId: uuid("request_id").notNull().unique(),
     type: transactionType("type").notNull(),
     category: transactionCategory("category").notNull().default("other"),
@@ -75,15 +151,33 @@ export const transactions = pgTable(
     amount: numeric("amount", { precision: 15, scale: 2 }).notNull(),
     description: varchar("description", { length: 160 }).notNull(),
     occurredOn: date("occurred_on", { mode: "string" }).notNull(),
+    recurrenceId: uuid("recurrence_id"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
   },
   (table) => [
     foreignKey({
-      name: "transactions_account_google_owner_fk",
-      columns: [table.accountId, table.googleId],
-      foreignColumns: [accounts.id, accounts.googleId],
+      name: "transactions_recurrence_owner_fk",
+      columns: [table.recurrenceId, table.accountId, table.userId],
+      foreignColumns: [
+        recurringExpenses.id,
+        recurringExpenses.accountId,
+        recurringExpenses.userId,
+      ],
+    }).onDelete("restrict"),
+    unique("transactions_recurrence_date_unique").on(
+      table.recurrenceId,
+      table.occurredOn,
+    ),
+    check(
+      "transactions_recurrence_expense_only",
+      sql`${table.recurrenceId} is null or ${table.type} = 'expense'`,
+    ),
+    foreignKey({
+      name: "transactions_account_user_owner_fk",
+      columns: [table.accountId, table.userId],
+      foreignColumns: [accounts.id, accounts.userId],
     }).onDelete("restrict"),
     check(
       "transactions_amount_positive",
@@ -112,7 +206,7 @@ export const balanceAdjustments = pgTable(
   {
     id: uuid("id").defaultRandom().primaryKey(),
     accountId: uuid("account_id").notNull(),
-    googleId: text("google_id").notNull(),
+    userId: uuid("user_id").notNull(),
     requestId: uuid("request_id").notNull().unique(),
     previousBalance: numeric("previous_balance", {
       precision: 15,
@@ -129,9 +223,9 @@ export const balanceAdjustments = pgTable(
   },
   (table) => [
     foreignKey({
-      name: "balance_adjustments_account_google_owner_fk",
-      columns: [table.accountId, table.googleId],
-      foreignColumns: [accounts.id, accounts.googleId],
+      name: "balance_adjustments_account_user_owner_fk",
+      columns: [table.accountId, table.userId],
+      foreignColumns: [accounts.id, accounts.userId],
     }).onDelete("restrict"),
     check(
       "balance_adjustments_changed",
@@ -157,6 +251,16 @@ export const balanceAdjustments = pgTable(
   ],
 );
 
+export const settingsRequests = pgTable("account_settings_requests", {
+  requestId: uuid("request_id").primaryKey(),
+  accountId: uuid("account_id").notNull().references(() => accounts.id),
+  userId: uuid("user_id").notNull().references(() => users.id),
+  payload: text("payload").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type User = typeof users.$inferSelect;
+export type NewUser = typeof users.$inferInsert;
 export type Account = typeof accounts.$inferSelect;
 export type NewAccount = typeof accounts.$inferInsert;
 export type Transaction = typeof transactions.$inferSelect;
