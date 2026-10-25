@@ -1,0 +1,796 @@
+{
+  "type": "base",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "21b894d2-ff1c-41b4-bfb0-1f7441cbf0dd",
+  "prevIds": [
+    "00000000-0000-0000-0000-000000000000"
+  ],
+  "footprints": [
+    {
+      "statementType": "create_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "transaction_type"
+      ],
+      "writes": [
+        "s|enum|public.transaction_type",
+        "n|enum|public.transaction_type",
+        "e|enum|public.transaction_type",
+        "n|type|public.transaction_type"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "accounts"
+      ],
+      "writes": [
+        "s|tbl|public.accounts",
+        "n|tbl|public.accounts",
+        "e|tbl|public.accounts",
+        "n|rel|public.accounts",
+        "n|type|public.accounts",
+        "n|rel|public.accounts_pkey",
+        "n|rel|public.accounts_clerk_user_id_key"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "balance_adjustments"
+      ],
+      "writes": [
+        "s|tbl|public.balance_adjustments",
+        "n|tbl|public.balance_adjustments",
+        "e|tbl|public.balance_adjustments",
+        "n|rel|public.balance_adjustments",
+        "n|type|public.balance_adjustments",
+        "n|rel|public.balance_adjustments_pkey",
+        "n|rel|public.balance_adjustments_request_id_key"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "transactions"
+      ],
+      "writes": [
+        "s|tbl|public.transactions",
+        "n|tbl|public.transactions",
+        "e|tbl|public.transactions",
+        "n|rel|public.transactions",
+        "n|type|public.transactions",
+        "n|rel|public.transactions_pkey",
+        "n|rel|public.transactions_request_id_key"
+      ],
+      "reads": [
+        "n|sch|public",
+        "n|enum|public.transaction_type"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "balance_adjustments",
+        "balance_adjustments_account_timeline_idx"
+      ],
+      "writes": [
+        "s|idx|public.balance_adjustments_account_timeline_idx",
+        "n|idx|public.balance_adjustments_account_timeline_idx",
+        "e|idx|public.balance_adjustments_account_timeline_idx",
+        "n|rel|public.balance_adjustments_account_timeline_idx"
+      ],
+      "reads": [
+        "n|tbl|public.balance_adjustments",
+        "n|sch|public",
+        "n|col|public.balance_adjustments.account_id",
+        "n|col|public.balance_adjustments.created_at",
+        "n|col|public.balance_adjustments.id"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "transactions",
+        "transactions_account_timeline_idx"
+      ],
+      "writes": [
+        "s|idx|public.transactions_account_timeline_idx",
+        "n|idx|public.transactions_account_timeline_idx",
+        "e|idx|public.transactions_account_timeline_idx",
+        "n|rel|public.transactions_account_timeline_idx"
+      ],
+      "reads": [
+        "n|tbl|public.transactions",
+        "n|sch|public",
+        "n|col|public.transactions.account_id",
+        "n|col|public.transactions.occurred_on",
+        "n|col|public.transactions.created_at",
+        "n|col|public.transactions.id"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "transactions",
+        "transactions_account_type_date_idx"
+      ],
+      "writes": [
+        "s|idx|public.transactions_account_type_date_idx",
+        "n|idx|public.transactions_account_type_date_idx",
+        "e|idx|public.transactions_account_type_date_idx",
+        "n|rel|public.transactions_account_type_date_idx"
+      ],
+      "reads": [
+        "n|tbl|public.transactions",
+        "n|sch|public",
+        "n|col|public.transactions.account_id",
+        "n|col|public.transactions.type",
+        "n|col|public.transactions.occurred_on"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "balance_adjustments"
+      ],
+      "writes": [
+        "s|fk|public.balance_adjustments.balance_adjustments_account_id_accounts_id_fkey",
+        "n|fk|public.balance_adjustments.balance_adjustments_account_id_accounts_id_fkey",
+        "e|fk|public.balance_adjustments.balance_adjustments_account_id_accounts_id_fkey",
+        "n|con|public.balance_adjustments.balance_adjustments_account_id_accounts_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.balance_adjustments",
+        "n|sch|public",
+        "n|tbl|public.accounts",
+        "n|sch|public",
+        "n|col|public.balance_adjustments.account_id",
+        "n|col|public.accounts.id",
+        "e|uniqueness|public.accounts.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "transactions"
+      ],
+      "writes": [
+        "s|fk|public.transactions.transactions_account_id_accounts_id_fkey",
+        "n|fk|public.transactions.transactions_account_id_accounts_id_fkey",
+        "e|fk|public.transactions.transactions_account_id_accounts_id_fkey",
+        "n|con|public.transactions.transactions_account_id_accounts_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.transactions",
+        "n|sch|public",
+        "n|tbl|public.accounts",
+        "n|sch|public",
+        "n|col|public.transactions.account_id",
+        "n|col|public.accounts.id",
+        "e|uniqueness|public.accounts.id"
+      ]
+    }
+  ],
+  "ddl": [
+    {
+      "schema": "public",
+      "name": "accounts",
+      "isRlsEnabled": false,
+      "entityType": "tables"
+    },
+    {
+      "schema": "public",
+      "name": "balance_adjustments",
+      "isRlsEnabled": false,
+      "entityType": "tables"
+    },
+    {
+      "schema": "public",
+      "name": "transactions",
+      "isRlsEnabled": false,
+      "entityType": "tables"
+    },
+    {
+      "schema": "public",
+      "name": "transaction_type",
+      "values": [
+        "income",
+        "expense"
+      ],
+      "entityType": "enums"
+    },
+    {
+      "schema": "public",
+      "table": "accounts",
+      "name": "id",
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "gen_random_uuid()",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "accounts",
+      "name": "clerk_user_id",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "accounts",
+      "name": "currency",
+      "type": "varchar(3)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'BRL'",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "accounts",
+      "name": "balance",
+      "type": "numeric(15,2)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'0.00'",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "accounts",
+      "name": "version",
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "accounts",
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "accounts",
+      "name": "updated_at",
+      "type": "timestamp with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "balance_adjustments",
+      "name": "id",
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "gen_random_uuid()",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "balance_adjustments",
+      "name": "account_id",
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "balance_adjustments",
+      "name": "request_id",
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "balance_adjustments",
+      "name": "previous_balance",
+      "type": "numeric(15,2)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "balance_adjustments",
+      "name": "new_balance",
+      "type": "numeric(15,2)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "balance_adjustments",
+      "name": "reason",
+      "type": "varchar(240)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "balance_adjustments",
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "transactions",
+      "name": "id",
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "gen_random_uuid()",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "transactions",
+      "name": "account_id",
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "transactions",
+      "name": "request_id",
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "transactions",
+      "name": "type",
+      "type": "transaction_type",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "transactions",
+      "name": "amount",
+      "type": "numeric(15,2)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "transactions",
+      "name": "description",
+      "type": "varchar(160)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "transactions",
+      "name": "occurred_on",
+      "type": "date",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "transactions",
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "balance_adjustments",
+      "name": "balance_adjustments_account_timeline_idx",
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "account_id",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "created_at",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "id",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "entityType": "indexes"
+    },
+    {
+      "schema": "public",
+      "table": "transactions",
+      "name": "transactions_account_timeline_idx",
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "account_id",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "occurred_on",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "created_at",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "id",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "entityType": "indexes"
+    },
+    {
+      "schema": "public",
+      "table": "transactions",
+      "name": "transactions_account_type_date_idx",
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "account_id",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "type",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "occurred_on",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "entityType": "indexes"
+    },
+    {
+      "schema": "public",
+      "table": "balance_adjustments",
+      "name": "balance_adjustments_account_id_accounts_id_fkey",
+      "nameExplicit": false,
+      "columns": [
+        "account_id"
+      ],
+      "schemaTo": "public",
+      "tableTo": "accounts",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "RESTRICT",
+      "entityType": "fks"
+    },
+    {
+      "schema": "public",
+      "table": "transactions",
+      "name": "transactions_account_id_accounts_id_fkey",
+      "nameExplicit": false,
+      "columns": [
+        "account_id"
+      ],
+      "schemaTo": "public",
+      "tableTo": "accounts",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "RESTRICT",
+      "entityType": "fks"
+    },
+    {
+      "schema": "public",
+      "table": "accounts",
+      "name": "accounts_pkey",
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "entityType": "pks"
+    },
+    {
+      "schema": "public",
+      "table": "balance_adjustments",
+      "name": "balance_adjustments_pkey",
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "entityType": "pks"
+    },
+    {
+      "schema": "public",
+      "table": "transactions",
+      "name": "transactions_pkey",
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "entityType": "pks"
+    },
+    {
+      "schema": "public",
+      "table": "accounts",
+      "name": "accounts_clerk_user_id_key",
+      "nameExplicit": false,
+      "columns": [
+        "clerk_user_id"
+      ],
+      "nullsNotDistinct": false,
+      "entityType": "uniques"
+    },
+    {
+      "schema": "public",
+      "table": "balance_adjustments",
+      "name": "balance_adjustments_request_id_key",
+      "nameExplicit": false,
+      "columns": [
+        "request_id"
+      ],
+      "nullsNotDistinct": false,
+      "entityType": "uniques"
+    },
+    {
+      "schema": "public",
+      "table": "transactions",
+      "name": "transactions_request_id_key",
+      "nameExplicit": false,
+      "columns": [
+        "request_id"
+      ],
+      "nullsNotDistinct": false,
+      "entityType": "uniques"
+    },
+    {
+      "schema": "public",
+      "table": "accounts",
+      "name": "accounts_currency_brl",
+      "value": "\"currency\" = 'BRL'",
+      "entityType": "checks"
+    },
+    {
+      "schema": "public",
+      "table": "accounts",
+      "name": "accounts_owner_not_empty",
+      "value": "length(btrim(\"clerk_user_id\")) > 0",
+      "entityType": "checks"
+    },
+    {
+      "schema": "public",
+      "table": "accounts",
+      "name": "accounts_version_non_negative",
+      "value": "\"version\" >= 0",
+      "entityType": "checks"
+    },
+    {
+      "schema": "public",
+      "table": "accounts",
+      "name": "accounts_balance_range",
+      "value": "\"balance\" between -9999999999999.99 and 9999999999999.99",
+      "entityType": "checks"
+    },
+    {
+      "schema": "public",
+      "table": "balance_adjustments",
+      "name": "balance_adjustments_changed",
+      "value": "\"previous_balance\" <> \"new_balance\"",
+      "entityType": "checks"
+    },
+    {
+      "schema": "public",
+      "table": "balance_adjustments",
+      "name": "balance_adjustments_reason_not_empty",
+      "value": "length(btrim(\"reason\")) > 0",
+      "entityType": "checks"
+    },
+    {
+      "schema": "public",
+      "table": "balance_adjustments",
+      "name": "balance_adjustments_previous_range",
+      "value": "\"previous_balance\" between -9999999999999.99 and 9999999999999.99",
+      "entityType": "checks"
+    },
+    {
+      "schema": "public",
+      "table": "balance_adjustments",
+      "name": "balance_adjustments_new_range",
+      "value": "\"new_balance\" between -9999999999999.99 and 9999999999999.99",
+      "entityType": "checks"
+    },
+    {
+      "schema": "public",
+      "table": "transactions",
+      "name": "transactions_amount_positive",
+      "value": "\"amount\" between 0.01 and 9999999999999.99",
+      "entityType": "checks"
+    },
+    {
+      "schema": "public",
+      "table": "transactions",
+      "name": "transactions_description_not_empty",
+      "value": "length(btrim(\"description\")) > 0",
+      "entityType": "checks"
+    }
+  ]
+}

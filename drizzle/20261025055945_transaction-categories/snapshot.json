@@ -1,0 +1,89 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "2b9bb4e1-d4bd-4b5a-82dd-fc9c620745be",
+  "prevIds": [
+    "23bbf9dd-388a-4da9-b086-d7d50fd1e50d"
+  ],
+  "footprints": [
+    {
+      "statementType": "create_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "transaction_category"
+      ],
+      "writes": [
+        "s|enum|public.transaction_category",
+        "n|enum|public.transaction_category",
+        "e|enum|public.transaction_category",
+        "n|type|public.transaction_category"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "transactions",
+        "category"
+      ],
+      "writes": [
+        "s|col|public.transactions.category",
+        "n|col|public.transactions.category",
+        "e|col|public.transactions.category"
+      ],
+      "reads": [
+        "n|tbl|public.transactions",
+        "n|sch|public",
+        "n|enum|public.transaction_category"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "transaction_category",
+        "values": [
+          "salary",
+          "freelance",
+          "investments",
+          "sales",
+          "refunds",
+          "food",
+          "housing",
+          "transport",
+          "health",
+          "education",
+          "leisure",
+          "shopping",
+          "bills",
+          "other"
+        ],
+        "entityType": "enums"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "transactions",
+        "name": "category",
+        "type": "transaction_category",
+        "typeSchema": "public",
+        "notNull": true,
+        "dimensions": 0,
+        "default": "'other'",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    }
+  ]
+}

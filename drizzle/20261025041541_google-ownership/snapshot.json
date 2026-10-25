@@ -1,0 +1,354 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "23bbf9dd-388a-4da9-b086-d7d50fd1e50d",
+  "prevIds": [
+    "21b894d2-ff1c-41b4-bfb0-1f7441cbf0dd"
+  ],
+  "footprints": [
+    {
+      "statementType": "drop_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "balance_adjustments"
+      ],
+      "writes": [
+        "s|fk|public.balance_adjustments.balance_adjustments_account_id_accounts_id_fkey",
+        "n|fk|public.balance_adjustments.balance_adjustments_account_id_accounts_id_fkey",
+        "e|fk|public.balance_adjustments.balance_adjustments_account_id_accounts_id_fkey",
+        "n|con|public.balance_adjustments.balance_adjustments_account_id_accounts_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.balance_adjustments",
+        "n|sch|public",
+        "e|col|public.balance_adjustments.account_id"
+      ]
+    },
+    {
+      "statementType": "drop_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "transactions"
+      ],
+      "writes": [
+        "s|fk|public.transactions.transactions_account_id_accounts_id_fkey",
+        "n|fk|public.transactions.transactions_account_id_accounts_id_fkey",
+        "e|fk|public.transactions.transactions_account_id_accounts_id_fkey",
+        "n|con|public.transactions.transactions_account_id_accounts_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.transactions",
+        "n|sch|public",
+        "e|col|public.transactions.account_id"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "accounts",
+        "google_id"
+      ],
+      "writes": [
+        "s|col|public.accounts.google_id",
+        "n|col|public.accounts.google_id",
+        "e|col|public.accounts.google_id"
+      ],
+      "reads": [
+        "n|tbl|public.accounts",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "balance_adjustments",
+        "google_id"
+      ],
+      "writes": [
+        "s|col|public.balance_adjustments.google_id",
+        "n|col|public.balance_adjustments.google_id",
+        "e|col|public.balance_adjustments.google_id"
+      ],
+      "reads": [
+        "n|tbl|public.balance_adjustments",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "transactions",
+        "google_id"
+      ],
+      "writes": [
+        "s|col|public.transactions.google_id",
+        "n|col|public.transactions.google_id",
+        "e|col|public.transactions.google_id"
+      ],
+      "reads": [
+        "n|tbl|public.transactions",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_unique",
+      "statementTarget": [
+        "table",
+        "public",
+        "accounts"
+      ],
+      "writes": [
+        "s|uq|public.accounts.accounts_id_google_id_unique",
+        "n|uq|public.accounts.accounts_id_google_id_unique",
+        "e|uq|public.accounts.accounts_id_google_id_unique",
+        "n|con|public.accounts.accounts_id_google_id_unique",
+        "n|rel|public.accounts_id_google_id_unique"
+      ],
+      "reads": [
+        "n|tbl|public.accounts",
+        "n|sch|public",
+        "n|col|public.accounts.id",
+        "n|col|public.accounts.google_id"
+      ]
+    },
+    {
+      "statementType": "add_unique",
+      "statementTarget": [
+        "table",
+        "public",
+        "accounts"
+      ],
+      "writes": [
+        "s|uq|public.accounts.accounts_google_id_key",
+        "n|uq|public.accounts.accounts_google_id_key",
+        "e|uq|public.accounts.accounts_google_id_key",
+        "n|con|public.accounts.accounts_google_id_key",
+        "n|rel|public.accounts_google_id_key"
+      ],
+      "reads": [
+        "n|tbl|public.accounts",
+        "n|sch|public",
+        "n|col|public.accounts.google_id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "balance_adjustments"
+      ],
+      "writes": [
+        "s|fk|public.balance_adjustments.balance_adjustments_account_google_owner_fk",
+        "n|fk|public.balance_adjustments.balance_adjustments_account_google_owner_fk",
+        "e|fk|public.balance_adjustments.balance_adjustments_account_google_owner_fk",
+        "n|con|public.balance_adjustments.balance_adjustments_account_google_owner_fk"
+      ],
+      "reads": [
+        "n|tbl|public.balance_adjustments",
+        "n|sch|public",
+        "n|tbl|public.accounts",
+        "n|sch|public",
+        "n|col|public.balance_adjustments.account_id",
+        "n|col|public.balance_adjustments.google_id",
+        "n|col|public.accounts.id",
+        "n|col|public.accounts.google_id",
+        "e|uniqueness|public.accounts.google_id.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "transactions"
+      ],
+      "writes": [
+        "s|fk|public.transactions.transactions_account_google_owner_fk",
+        "n|fk|public.transactions.transactions_account_google_owner_fk",
+        "e|fk|public.transactions.transactions_account_google_owner_fk",
+        "n|con|public.transactions.transactions_account_google_owner_fk"
+      ],
+      "reads": [
+        "n|tbl|public.transactions",
+        "n|sch|public",
+        "n|tbl|public.accounts",
+        "n|sch|public",
+        "n|col|public.transactions.account_id",
+        "n|col|public.transactions.google_id",
+        "n|col|public.accounts.id",
+        "n|col|public.accounts.google_id",
+        "e|uniqueness|public.accounts.google_id.id"
+      ]
+    },
+    {
+      "statementType": "add_check",
+      "statementTarget": [
+        "table",
+        "public",
+        "accounts"
+      ],
+      "writes": [
+        "s|ck|public.accounts.accounts_google_id_not_empty",
+        "n|ck|public.accounts.accounts_google_id_not_empty",
+        "e|ck|public.accounts.accounts_google_id_not_empty",
+        "n|con|public.accounts.accounts_google_id_not_empty"
+      ],
+      "reads": [
+        "n|tbl|public.accounts",
+        "n|sch|public",
+        "n|col|public.accounts.google_id"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "accounts",
+        "name": "google_id",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "balance_adjustments",
+        "name": "google_id",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "transactions",
+        "name": "google_id",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "balance_adjustments",
+        "name": "balance_adjustments_account_google_owner_fk",
+        "nameExplicit": true,
+        "columns": [
+          "account_id",
+          "google_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "accounts",
+        "columnsTo": [
+          "id",
+          "google_id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "RESTRICT",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "transactions",
+        "name": "transactions_account_google_owner_fk",
+        "nameExplicit": true,
+        "columns": [
+          "account_id",
+          "google_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "accounts",
+        "columnsTo": [
+          "id",
+          "google_id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "RESTRICT",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "accounts",
+        "name": "accounts_id_google_id_unique",
+        "nameExplicit": true,
+        "columns": [
+          "id",
+          "google_id"
+        ],
+        "nullsNotDistinct": false,
+        "entityType": "uniques"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "accounts",
+        "name": "accounts_google_id_key",
+        "nameExplicit": false,
+        "columns": [
+          "google_id"
+        ],
+        "nullsNotDistinct": false,
+        "entityType": "uniques"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "accounts",
+        "name": "accounts_google_id_not_empty",
+        "value": "length(btrim(\"google_id\")) > 0",
+        "entityType": "checks"
+      }
+    },
+    {
+      "op": "drop",
+      "key": "fks\u0000[\"public\",\"balance_adjustments\",\"balance_adjustments_account_id_accounts_id_fkey\"]"
+    },
+    {
+      "op": "drop",
+      "key": "fks\u0000[\"public\",\"transactions\",\"transactions_account_id_accounts_id_fkey\"]"
+    }
+  ]
+}

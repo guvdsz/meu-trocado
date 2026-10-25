@@ -1,0 +1,2 @@
+CREATE TYPE "transaction_category" AS ENUM('salary', 'freelance', 'investments', 'sales', 'refunds', 'food', 'housing', 'transport', 'health', 'education', 'leisure', 'shopping', 'bills', 'other');--> statement-breakpoint
+ALTER TABLE "transactions" ADD COLUMN "category" "transaction_category" DEFAULT 'other'::"transaction_category" NOT NULL;

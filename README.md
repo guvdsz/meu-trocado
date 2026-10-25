@@ -1,36 +1,28 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Meu Trocado
 
-## Getting Started
+Aplicação de controle financeiro com Next.js, Clerk, Neon/PostgreSQL e Drizzle.
 
-First, run the development server:
+O dashboard em `/` reúne saldo, entradas, saídas, resumo mensal, última movimentação e ajuste manual de saldo. O histórico paginado fica em `/transactions`. As telas privadas ficam em `src/app/(private)`, protegidas pelo Clerk. Os dados são vinculados ao ID Google recebido pelo Clerk no servidor.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
+A implementação e as regras de autenticação/persistência estão em [docs/dashboard.md](docs/dashboard.md). O [planejamento original](docs/planejamento-mvp.md) registra as decisões iniciais do MVP.
+
+Os formulários usam React Hook Form e Zod, com validações em `/schemas`, Server Actions nas rotas e schema Drizzle em `src/db/schema.ts`. A interface usa shadcn/Base UI com estilos próprios, calendário, popovers, navegação móvel e skeletons.
+
+```sh
+pnpm install
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Validação: `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm db:check` e `pnpm test:ui` (testes visuais/acessibilidade com dados fictícios, sem banco ou conta Google).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Banco: `pnpm db:generate` gera migrations locais; `pnpm db:migrate` aplica no banco configurado em `DATABASE_URL`. Configure também as chaves do Clerk no `.env`.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Instalar o aplicativo
 
-## Learn More
+O Meu Trocado é uma PWA. Com o site publicado em HTTPS, a instalação pode ser feita pelo menu do próprio navegador. A interface da aplicação não exibe avisos, botões ou instruções de instalação.
 
-To learn more about Next.js, take a look at the following resources:
+O manifesto está em `src/app/manifest.ts`. A logo usa as três moedas da marca existente; o SVG original fica em `public/brand/icon.svg`. `pnpm icons:generate` recria o favicon ICO (16/32/48 px), o SVG de aba, o ícone Apple (180 px) e os ícones PWA (192/512 px, incluindo maskable).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Não há modo offline nem registro de service worker em novas instalações. Quando a conexão cai com a aplicação aberta, um aviso pede para verificar a internet e desaparece quando a conexão volta. Consultar e alterar dados exige internet. O arquivo `public/sw.js` existe apenas para desativar workers de versões anteriores e limpar seu cache; ele não intercepta requisições nem armazena conteúdo. A aplicação também remove caches antigos dessa versão ao abrir.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Para testar a instalação no computador, use `pnpm build && pnpm start` em `localhost`. No celular, acessar pelo IP local exige HTTPS. `pnpm test:pwa` verifica os arquivos públicos, tamanhos dos ícones e remoção do worker/cache antigo contra o servidor de produção, sem conta Google ou acesso ao banco. `pnpm test:ui` também cobre o aviso de conexão.

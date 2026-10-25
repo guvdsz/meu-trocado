@@ -1,11 +1,14 @@
+import { LoaderCircle } from "lucide-react";
+
 export default function Loader() {
-    return (
-        <div
-            aria-label="Carregando login"
-            className="flex min-h-[28rem] w-full items-center justify-center gap-2 text-sm text-teal-700"
-            role="status"
-        >
-            <span className="h-5 w-5 animate-spin rounded-full border-2 border-teal-200 border-t-teal-700" />
-        </div>
-    );
+  return (
+    <div className="page-loading" role="status" aria-live="polite">
+      <div className="loading-content">
+        <span className="loading-symbol">
+          <LoaderCircle className="spinner" size={34} aria-hidden="true" />
+        </span>
+        <p>Organizando seu trocado…</p>
+      </div>
+    </div>
+  );
 }
