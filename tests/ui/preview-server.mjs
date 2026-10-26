@@ -13,10 +13,10 @@ const css = (
 ).join("\n");
 
 const storeModule = `
-import {useSyncExternalStore} from 'react';
+import {createElement,useEffect,useSyncExternalStore} from 'react';
 import {toCents,fromCents} from './src/lib/financial';
 export const today='2026-10-25';
-let sessionId="fixture-session-1";let sessionNumber=1;let signedOut=false;let accountBalance="4280.50";let accountVersion=2;
+let loginPhase="password";let sessionId="fixture-session-1";let sessionNumber=1;let signedOut=false;let accountBalance="4280.50";let accountVersion=2;
 let preferences={currency:new URLSearchParams(location.search).get('currency')??'BRL',configured:!new URLSearchParams(location.search).has('unconfigured'),timeZone:'America/Sao_Paulo',locale:new URLSearchParams(location.search).get('locale')??'pt-BR',settingsVersion:0};
 let recurrences=[{id:'00000000-0000-4000-8000-000000000001',description:'Assinatura de internet',amount:'99.90',category:'bills',frequency:'monthly',startsOn:'2026-10-25',nextDueOn:'2026-11-25',version:1,endedAt:null}];
 let rows=Array.from({length:26},(_,i)=>({id:'fixture-'+i,type:i===1?'adjustment':i%3===0?'income':'expense',category:i===1?null:i%3===0?'salary':['food','housing','transport','leisure','other'][i%5],description:i===0?'Último registro demonstrativo':i===1?'Conferência de saldo':'Registro '+String(i+1),amount:i===1?'4000.00':i%3===0?'500.00':'25.50',day:'2026-10-'+String(24-Math.floor(i/2)).padStart(2,'0'),newBalance:i===1?'4000.00':null}));
@@ -28,7 +28,9 @@ export async function createTransactionAction(input){await new Promise(resolve=>
 export async function updateRecurrenceAction(input){await new Promise(resolve=>setTimeout(resolve,400));recurrences=recurrences.map(item=>item.id===input.id?{...item,...input,version:item.version+1}:item);emit();return {success:true}}
 export async function endRecurrenceAction(input){await new Promise(resolve=>setTimeout(resolve,400));recurrences=recurrences.filter(item=>item.id!==input.id);emit();return {success:true}}
 export async function adjustBalanceAction(input){await new Promise(resolve=>setTimeout(resolve,600));accountBalance=input.balance;accountVersion++;rows=[{id:input.requestId,type:'adjustment',description:input.reason,amount:'0.00',day:today,newBalance:input.balance},...rows];emit();return {success:true}}
-export function useAuth(){useFixture();return {isLoaded:true,sessionId:signedOut?null:sessionId}}
+export function useAuth(){useFixture();if(location.pathname.startsWith('/auth/sign-in'))return {isLoaded:loginPhase!=='activating',isSignedIn:loginPhase==='redirecting',sessionId:loginPhase==='redirecting'?sessionId:null};return {isLoaded:true,isSignedIn:!signedOut,sessionId:signedOut?null:sessionId}}
+// Simulate Clerk removing its UI during activation; navigation requires it to remain mounted.
+export function SignIn(){useFixture();useEffect(()=>{if(loginPhase!=='redirecting')return;const timer=setTimeout(()=>{history.pushState({},'','/');emit()},1200);return()=>clearTimeout(timer)},[loginPhase]);if(loginPhase!=='password')return null;return createElement('button',{type:'button',onClick:()=>{loginPhase='activating';emit();setTimeout(()=>{loginPhase='redirecting';emit()},300)}},'Concluir login de teste')}
 export function signInAgain(){sessionId='fixture-session-'+(++sessionNumber);signedOut=false;emit()}
 export function useClerk(){return {async signOut(){await new Promise(resolve=>setTimeout(resolve,250));if(new URLSearchParams(location.search).has('logoutError'))throw new Error('Fixture logout failure');signedOut=true;emit()},openUserProfile(){}}}
 export function usePathname(){useSyncExternalStore((listener)=>{listeners.add(listener);return()=>listeners.delete(listener)},()=>revision);return location.pathname}
@@ -37,6 +39,7 @@ export function useRouter(){return {push(url){const delay=Number(new URLSearchPa
 const entry = `
 import React from 'react';import {createRoot} from 'react-dom/client';
 import {AppShell} from './src/app/(private)/_components/app-shell';
+import {LoginForm} from './src/app/auth/sign-in/[[...sign-in]]/_components/login-form';
 import {Dashboard} from './src/app/(private)/_components/dashboard';
 import {HistoryScreen} from './src/app/(private)/transactions/_components/history-screen';
 import {RecurrencesScreen} from './src/app/(private)/recurrences/_components/recurrences-screen';
@@ -48,7 +51,7 @@ import {UnavailableState} from './src/app/_components/shared/unavailable-state';
 import {useFixture,today,signInAgain} from 'preview-store';
 import {PreferencesProvider} from './src/app/(private)/_components/preferences-context';
 import {SettingsForm} from './src/app/(private)/settings/_components/settings-form';
-function App(){const {rows,signedOut,recurrences,preferences,accountBalance,accountVersion}=useFixture();if(signedOut&&!new URLSearchParams(location.search).has('preserveShell'))return <main><h1>Sessão encerrada</h1></main>;if(location.pathname==='/loader')return <Loader/>;
+function App(){const {rows,signedOut,recurrences,preferences,accountBalance,accountVersion}=useFixture();if(location.pathname.startsWith('/auth/sign-in'))return <main className="mx-auto my-10 w-[min(440px,calc(100%-32px))] rounded-[20px] border bg-white p-6"><LoginForm/></main>;if(signedOut&&!new URLSearchParams(location.search).has('preserveShell'))return <main><h1>Sessão encerrada</h1></main>;if(location.pathname==='/loader')return <Loader/>;
 const params=new URLSearchParams(location.search);const month=params.get('month')??'2026-10';const page=Number(params.get('page')??1);const type=params.get('type')??'all';const query=params.get('q')??'';const category=params.get('category')??'all';
 const filtered=rows.filter(row=>row.day.startsWith(month)&&(type==='all'||type===row.type)&&(category==='all'||category===row.category)&&row.description.toLocaleLowerCase('pt-BR').includes(query.toLocaleLowerCase('pt-BR')));
 const data={balance:accountBalance,version:accountVersion,account:{balance:accountBalance,version:accountVersion,...preferences},income:'6500.00',expense:'2219.50',count:rows.length,lastActivity:rows[0],chart:[{month:'2026-05',income:'4200.00',expense:'2700.00'},{month:'2026-06',income:'4800.00',expense:'3400.00'},{month:'2026-07',income:'4400.00',expense:'2900.00'},{month:'2026-08',income:'5300.00',expense:'3500.00'},{month:'2026-09',income:'5100.00',expense:'3900.00'},{month:'2026-10',income:'6500.00',expense:'2219.50'}]};

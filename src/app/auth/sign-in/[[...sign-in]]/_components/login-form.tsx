@@ -1,6 +1,6 @@
 "use client";
 
-import { SignIn } from "@clerk/nextjs";
+import { SignIn, useAuth } from "@clerk/nextjs";
 import { usePathname } from "next/navigation";
 import { LoginFormLoading } from "./login-form-loading";
 import { LoginHeading } from "./login-heading";
@@ -21,12 +21,16 @@ const frameStyles = {
 
 export function LoginForm() {
   const pathname = usePathname();
+  const { isLoaded, isSignedIn } = useAuth();
+  const showLoading = !isLoaded || isSignedIn;
   const isStart = pathname.replace(/\/$/, "") === "/auth/sign-in";
 
   return (
     <>
       {isStart && <LoginHeading />}
-      <div className="login-clerk min-h-60 w-full min-w-0 text-base">
+      <div className="login-clerk relative min-h-60 w-full min-w-0 text-base" aria-busy={showLoading}>
+        {/* Keep Clerk mounted so its session activation and redirect can finish. */}
+        <div className={showLoading ? "invisible pointer-events-none" : undefined} inert={showLoading} aria-hidden={showLoading || undefined}>
         <SignIn
           fallback={<LoginFormLoading />}
           routing="path"
@@ -170,6 +174,12 @@ export function LoginForm() {
             },
           }}
         />
+        </div>
+        {showLoading && (
+          <div className="absolute inset-0">
+            <LoginFormLoading message={isSignedIn ? "Abrindo sua visão geral…" : undefined} />
+          </div>
+        )}
       </div>
     </>
   );
