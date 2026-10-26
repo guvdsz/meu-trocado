@@ -4,7 +4,7 @@ import { useState, type ComponentProps } from "react";
 import { usePathname } from "next/navigation";
 import { NavigationLink as Link } from "./navigation-link";
 import { NavigationSkeleton } from "./navigation-skeleton";
-import { useClerk } from "@clerk/nextjs";
+import { useAuth, useClerk } from "@clerk/nextjs";
 import {
   ChevronDown,
   LayoutDashboard,
@@ -34,12 +34,14 @@ import { RefreshProvider, useFinanceRefresh } from "./refresh-context";
 
 function UserMenu({ name, email }: { name: string; email: string }) {
   const clerk = useClerk();
+  const [open, setOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger
         className="account-trigger flex w-full items-center gap-2.5 rounded-xl border border-[#cfdac4] bg-[#f7f9f2] p-3 text-left text-[#294333] transition-[background,box-shadow] duration-150 hover:bg-[#eaf1df] hover:shadow-[0_2px_7px_#2943330a] data-popup-open:bg-[#eaf1df] data-popup-open:shadow-[0_2px_7px_#2943330a]"
         aria-label={`Abrir menu da conta de ${name}`}
+        disabled={signingOut}
       >
         <span className="account-avatar grid size-10 shrink-0 place-items-center rounded-full bg-[#d9e7c3] text-lg font-[650] text-[#3d5d2e]" aria-hidden="true">
           {name.slice(0, 1).toLocaleUpperCase("pt-BR")}
@@ -68,16 +70,20 @@ function UserMenu({ name, email }: { name: string; email: string }) {
           variant="ghost"
           className="menu-action w-full justify-start! logout-action text-[#963e2e]"
           disabled={signingOut}
+          aria-busy={signingOut}
           onClick={async () => {
+            if (signingOut) return;
             setSigningOut(true);
             try {
               await clerk.signOut({ redirectUrl: "/auth/sign-in" });
+              setOpen(false);
             } catch {
-              setSigningOut(false);
               toast.add({
                 title: "Não foi possível sair. Tente novamente.",
                 type: "error",
               });
+            } finally {
+              setSigningOut(false);
             }
           }}
         >
@@ -195,6 +201,10 @@ function AppShellContent({
   );
 }
 
-export function AppShell(props: ComponentProps<typeof AppShellContent>) {
-  return <RefreshProvider><AppShellContent {...props} /></RefreshProvider>;
+export function AppShell({ initialSessionId, ...props }: ComponentProps<typeof AppShellContent> & { initialSessionId?: string | null }) {
+  const { sessionId, isLoaded } = useAuth();
+  // Preserve the server session while Clerk hydrates, then reset cached UI only
+  // when the active session changes (including signing in as the same user).
+  const sessionKey = isLoaded ? sessionId : initialSessionId ?? sessionId;
+  return <RefreshProvider key={sessionKey ?? "signed-out"}><AppShellContent {...props} /></RefreshProvider>;
 }

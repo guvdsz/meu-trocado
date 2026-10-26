@@ -13,20 +13,22 @@ test("configuração é obrigatória em todas as rotas e não fecha por Escape o
     await expect(page.getByRole("button", { name: "Adicionar entrada" })).toHaveCount(0);
     await expect(dialog.getByRole("button", { name: "Fechar", exact: true })).toHaveCount(0);
   }
-  await page.getByLabel("Moeda", { exact: true }).selectOption("BRL");
+  await page.getByRole("combobox", { name: "Moeda", exact: true }).click();
+  await page.getByRole("option", { name: "BRL — Real brasileiro", exact: true }).click();
   await page.getByRole("button", { name: "Salvar configurações" }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
 });
 
 test("troca informa todas as exclusões, exige confirmação e libera a nova moeda", async ({ page }) => {
   await page.goto("/settings");
-  await page.getByLabel("Moeda", { exact: true }).selectOption("USD");
+  await page.getByRole("combobox", { name: "Moeda", exact: true }).click();
+  await page.getByRole("option", { name: "USD — Dólar americano", exact: true }).click();
   await expect(page.getByRole("alert")).toContainText("recorrências");
   const save = page.getByRole("button", { name: "Excluir dados e trocar moeda" });
   await expect(save).toBeDisabled();
   await page.getByLabel("Entendi e confirmo a exclusão dos dados.").check();
   await save.click();
-  await expect(page.getByLabel("Moeda", { exact: true })).toHaveValue("USD");
+  await expect(page.getByRole("combobox", { name: "Moeda", exact: true })).toContainText("USD — Dólar americano");
   await page.getByRole("link", { name: "Visão geral" }).click();
   await expect(page.locator(".finance-summary")).toContainText("USD 0,00");
   await page.getByRole("button", { name: "Adicionar entrada" }).click();
@@ -35,11 +37,12 @@ test("troca informa todas as exclusões, exige confirmação e libera a nova moe
 
 test("falha mantém modal obrigatório, moeda escolhida e possibilidade de tentar novamente", async ({ page }) => {
   await page.goto("/?unconfigured&settingsError");
-  await page.getByLabel("Moeda", { exact: true }).selectOption("BRL");
+  await page.getByRole("combobox", { name: "Moeda", exact: true }).click();
+  await page.getByRole("option", { name: "BRL — Real brasileiro", exact: true }).click();
   await page.getByRole("button", { name: "Salvar configurações" }).click();
   await expect(page.getByRole("status")).toContainText("Não foi possível salvar");
   await expect(page.getByRole("dialog")).toBeVisible();
-  await expect(page.getByLabel("Moeda", { exact: true })).toHaveValue("BRL");
+  await expect(page.getByRole("combobox", { name: "Moeda", exact: true })).toContainText("BRL — Real brasileiro");
   await expect(page.getByRole("button", { name: "Salvar configurações" })).toBeEnabled();
 });
 
@@ -59,12 +62,13 @@ test.describe("sugestão de fuso do dispositivo", () => {
 
   test("sugere o fuso americano sem escolher a moeda e persiste após confirmar", async ({ page }) => {
     await page.goto("/?unconfigured");
-    await expect(page.getByLabel("Fuso horário", { exact: true })).toHaveValue("America/Los_Angeles");
-    await expect(page.getByLabel("Moeda", { exact: true })).toHaveValue("");
-    await page.getByLabel("Moeda", { exact: true }).selectOption("BRL");
+    await expect(page.getByRole("combobox", { name: "Fuso horário", exact: true })).toContainText("America/Los Angeles");
+    await expect(page.getByRole("combobox", { name: "Moeda", exact: true })).toContainText("Selecione sua moeda");
+    await page.getByRole("combobox", { name: "Moeda", exact: true }).click();
+    await page.getByRole("option", { name: "BRL — Real brasileiro", exact: true }).click();
     await page.getByRole("button", { name: "Salvar configurações" }).click();
     await expect(page.getByRole("dialog")).toHaveCount(0);
     await page.getByRole("link", { name: "Configurações", exact: true }).click();
-    await expect(page.getByLabel("Fuso horário", { exact: true })).toHaveValue("America/Los_Angeles");
+    await expect(page.getByRole("combobox", { name: "Fuso horário", exact: true })).toContainText("America/Los Angeles");
   });
 });

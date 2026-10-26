@@ -141,7 +141,7 @@ export function HistoryScreen({
               >
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent alignItemWithTrigger={false}>
                 {types.map((type) => (
                   <SelectItem key={type.value} value={type.value}>
                     {type.label}

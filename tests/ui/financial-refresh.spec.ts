@@ -1,5 +1,24 @@
 import { expect, test } from "@playwright/test";
 
+test("seletor mostra o mês escolhido enquanto os dados ainda carregam", async ({ page }) => {
+  for (const path of ["/", "/transactions"]) {
+    await page.goto(`${path}?navigationDelay=1400`);
+    const picker = page.getByRole("button", { name: /Alterar período/ });
+    await picker.click();
+    await page.getByRole("button", { name: "set", exact: true }).click();
+    await expect(picker).toHaveText("Setembro de 2026", { timeout: 700 });
+    await expect(page.locator(".data-skeleton")).toBeVisible();
+    expect(new URL(page.url()).searchParams.get("month")).toBeNull();
+    await expect(page).toHaveURL(/month=2026-09/);
+    await expect(page.locator(".data-skeleton")).toHaveCount(0);
+    await expect(picker).toHaveText("Setembro de 2026");
+    await picker.click();
+    await expect(page.getByRole("button", { name: "set", exact: true })).toHaveAttribute("aria-pressed", "true");
+    await page.getByRole("button", { name: "Mês atual", exact: true }).click();
+    await expect(picker).toHaveText("Outubro de 2026");
+  }
+});
+
 test("navegação mostra a aba e o skeleton antes da resposta do servidor", async ({
   page,
 }) => {

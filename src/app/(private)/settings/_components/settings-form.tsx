@@ -5,6 +5,7 @@ import { useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { useClerk } from "@clerk/nextjs";
 import { Button } from "@/app/_components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/app/_components/ui/select";
 import { toast } from "@/app/_components/ui/toast";
 import { LoaderCircle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/app/_components/ui/dialog";
@@ -34,7 +35,6 @@ export function SettingsForm({ mandatory = false }: { mandatory?: boolean }) {
   const reset = !!currency && currency !== preferences.currency && (!!preferences.currency || !!preferences.hasFinancialData);
   const zones: string[] = ["UTC", ...timeZones];
   if (!zones.includes(timeZone)) zones.push(timeZone);
-  const selectClass = "h-12 w-full rounded-lg border bg-white px-3 text-base text-foreground focus:outline-2 focus:outline-primary";
   const content = <form className="grid gap-5" onSubmit={async event => {
     event.preventDefault();
     if (busy) return;
@@ -55,23 +55,34 @@ export function SettingsForm({ mandatory = false }: { mandatory?: boolean }) {
   }}>
     <fieldset disabled={busy} className="grid min-w-0 gap-5">
       <div className="grid gap-2 font-medium"><label htmlFor="settings-currency">Moeda</label>
-        <select id="settings-currency" className={selectClass} required value={currency} onChange={event => { setCurrency(event.target.value); setConfirmed(false); }}>
-          <option value="" disabled>Selecione sua moeda</option>
-          {currencies.map(code => <option key={code} value={code}>{code} — {currencyNames[code]}</option>)}
-        </select>
+        <Select required disabled={busy} value={currency || null} onValueChange={value => { setCurrency(value ?? ""); setConfirmed(false); }} items={currencies.map(code => ({ value: code, label: `${code} — ${currencyNames[code]}` }))}>
+          <SelectTrigger id="settings-currency"><SelectValue placeholder="Selecione sua moeda" /></SelectTrigger>
+          <SelectContent alignItemWithTrigger={false}>
+            {currencies.map(code => <SelectItem key={code} value={code}>{code} — {currencyNames[code]}</SelectItem>)}
+          </SelectContent>
+        </Select>
       </div>
       {currency && <p className="text-sm text-muted-foreground">Exemplo: {formatMoney("1234.56", currency, locale)}</p>}
       <div className="grid gap-2 font-medium"><label htmlFor="settings-time-zone">Fuso horário</label>
-        <select id="settings-time-zone" className={selectClass} value={timeZone} onChange={event => setTimeZone(event.target.value)}>
-          {zones.sort().map(zone => <option key={zone} value={zone}>{zone.replaceAll("_", " ")}</option>)}
-        </select>
+        <Select disabled={busy} value={timeZone} onValueChange={value => { if (value) setTimeZone(value); }} items={zones.sort().map(zone => ({ value: zone, label: zone.replaceAll("_", " ") }))}>
+          <SelectTrigger id="settings-time-zone"><SelectValue /></SelectTrigger>
+          <SelectContent alignItemWithTrigger={false}>
+            {zones.map(zone => <SelectItem key={zone} value={zone}>{zone.replaceAll("_", " ")}</SelectItem>)}
+          </SelectContent>
+        </Select>
       </div>
       {mandatory && <Button type="button" variant="outline" onClick={() => setTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone)}>Usar fuso deste dispositivo</Button>}
       <div className="grid gap-2 font-medium"><label htmlFor="settings-locale">Formato de números e datas</label>
-        <select id="settings-locale" className={selectClass} value={locale} onChange={event => setLocale(event.target.value)}>
-          <option value="pt-BR">Português (Brasil) — 1.234,56</option>
-          <option value="en-US">Inglês (Estados Unidos) — 1,234.56</option>
-        </select>
+        <Select disabled={busy} value={locale} onValueChange={value => { if (value) setLocale(value); }} items={[
+          { value: "pt-BR", label: "Português (Brasil) — 1.234,56" },
+          { value: "en-US", label: "Inglês (Estados Unidos) — 1,234.56" },
+        ]}>
+          <SelectTrigger id="settings-locale"><SelectValue /></SelectTrigger>
+          <SelectContent alignItemWithTrigger={false}>
+            <SelectItem value="pt-BR">Português (Brasil) — 1.234,56</SelectItem>
+            <SelectItem value="en-US">Inglês (Estados Unidos) — 1,234.56</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
       <p className="text-sm leading-relaxed text-muted-foreground">O fuso define o dia atual, as datas dos ajustes e os vencimentos. As datas de entradas e saídas já registradas são preservadas.</p>
       {reset && <div role="alert" className="grid gap-3 rounded-xl border border-red-300 bg-red-50 p-4 text-sm leading-relaxed text-red-950">

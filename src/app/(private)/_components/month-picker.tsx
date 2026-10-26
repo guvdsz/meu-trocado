@@ -3,7 +3,7 @@
 import { usePreferences } from "./preferences-context";
 
 import { controlStyles } from "@/app/_components/ui/control-styles";
-import { useState } from "react";
+import { startTransition, useOptimistic, useState } from "react";
 import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/app/_components/ui/button";
 import {
@@ -24,14 +24,25 @@ export function MonthPicker({
 }) {
   const { locale } = usePreferences();
   const [open, setOpen] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useOptimistic(value);
   const [year, setYear] = useState(Number(value.slice(0, 4)));
-  const label = new Date(`${value}-01T12:00:00Z`).toLocaleDateString(locale, {
+  const label = new Date(`${selectedMonth}-01T12:00:00Z`).toLocaleDateString(locale, {
     month: "long",
     year: "numeric",
     timeZone: "UTC",
   });
+  function selectMonth(month: string) {
+    setOpen(false);
+    startTransition(() => {
+      setSelectedMonth(month);
+      onChange(month);
+    });
+  }
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={(nextOpen) => {
+      setOpen(nextOpen);
+      if (nextOpen) setYear(Number(selectedMonth.slice(0, 4)));
+    }}>
       <PopoverTrigger
         render={<Button variant="outline" className={`period-trigger min-w-[195px] justify-start! border-[#c9d3c0] bg-white text-sm! shadow-[0_1px_2px_#29433306] max-[650px]:min-w-0 focus-visible:ring-0 ${controlStyles}`} />}
         aria-label={`Alterar período: ${label}`}
@@ -71,13 +82,10 @@ export function MonthPicker({
             return (
               <Button
                 key={month}
-                variant={month === value ? "default" : "ghost"}
+                variant={month === selectedMonth ? "default" : "ghost"}
                 disabled={month > today.slice(0, 7)}
-                aria-pressed={month === value}
-                onClick={() => {
-                  onChange(month);
-                  setOpen(false);
-                }}
+                aria-pressed={month === selectedMonth}
+                onClick={() => selectMonth(month)}
               >
                 {name}
               </Button>
@@ -87,9 +95,8 @@ export function MonthPicker({
         <Button
           variant="outline"
           onClick={() => {
-            onChange(today.slice(0, 7));
+            selectMonth(today.slice(0, 7));
             setYear(Number(today.slice(0, 4)));
-            setOpen(false);
           }}
         >
           Mês atual
