@@ -24,23 +24,28 @@ test("navegação mostra a aba e o skeleton antes da resposta do servidor", asyn
 }) => {
   for (const width of [1440, 390]) {
     await page.setViewportSize({ width, height: 1000 });
-    await page.goto("/?navigationDelay=1400");
-    if (width < 800)
-      await page.getByRole("button", { name: "Abrir navegação" }).click();
-    await page
-      .getByRole("link", { name: "Movimentações", exact: true })
-      .last()
-      .click();
-    await expect(page.locator(".history-page-skeleton")).toBeVisible({
-      timeout: 700,
-    });
-    await expect(page.locator(".topbar-page-title")).toHaveText(
-      "Movimentações",
-    );
-    expect(new URL(page.url()).pathname).toBe("/");
-    await expect(page).toHaveURL(/\/transactions$/);
-    await expect(page.locator(".ledger-table")).toBeVisible();
-    await expect(page.locator(".history-page-skeleton")).toHaveCount(0);
+    for (const [title, path] of [
+      ["Movimentações", "/transactions"],
+      ["Recorrências", "/recurrences"],
+      ["Configurações", "/settings"],
+    ]) {
+      await page.goto("/?navigationDelay=1400");
+      if (width < 800)
+        await page.getByRole("button", { name: "Abrir navegação" }).click();
+      await page
+        .getByRole("link", { name: title, exact: true })
+        .last()
+        .click();
+      await expect(page.locator(".page-skeleton")).toBeVisible({
+        timeout: 700,
+      });
+      await expect(page.locator(".topbar-page-title")).toHaveText(title);
+      await expect(page.locator("#main-content h1")).toHaveCount(0);
+      await expect(page.locator("#main-content .finance-panel")).toHaveCount(0);
+      expect(new URL(page.url()).pathname).toBe("/");
+      await expect(page).toHaveURL(new RegExp(`${path}$`));
+      await expect(page.locator(".page-skeleton")).toHaveCount(0);
+    }
   }
 });
 

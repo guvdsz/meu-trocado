@@ -35,7 +35,7 @@ export function SummaryGrid({ className, ...props }: ComponentProps<"div">) {
     <div
       className={cn(
         "finance-summary mb-6 grid grid-cols-3 items-stretch gap-5 max-[1150px]:gap-4 max-[950px]:grid-cols-2",
-        "min-[651px]:max-[800px]:grid-cols-3 max-[650px]:gap-3.5",
+        "min-[651px]:max-[800px]:grid-cols-3 max-[650px]:grid-cols-1 max-[650px]:gap-3.5",
         className,
       )}
       {...props}

@@ -135,7 +135,7 @@ export function MonthlyCharts({
             <BarChart
               accessibilityLayer
               data={series}
-              margin={{ top: 12, right: 12, bottom: 0, left: 0 }}
+              margin={{ top: 12, right: 12, bottom: 0, left: 12 }}
               barGap={4}
             >
               <CartesianGrid vertical={false} strokeDasharray="3 3" />
@@ -150,7 +150,10 @@ export function MonthlyCharts({
                 tickLine={false}
                 axisLine={false}
                 tickFormatter={value => axisMoney(value, locale)}
-                width={48}
+                width="auto"
+                tickMargin={10}
+                tickSize={0}
+                tick={{ fontSize: 13 }}
                 tickCount={5}
               />
               <ChartTooltip
@@ -227,7 +230,7 @@ export function MonthlyCharts({
             <LineChart
               accessibilityLayer
               data={series}
-              margin={{ top: 12, right: 16, bottom: 0, left: 0 }}
+              margin={{ top: 12, right: 16, bottom: 0, left: 12 }}
             >
               <CartesianGrid vertical={false} strokeDasharray="3 3" />
               <XAxis
@@ -241,7 +244,10 @@ export function MonthlyCharts({
                 tickLine={false}
                 axisLine={false}
                 tickFormatter={value => axisMoney(value, locale)}
-                width={48}
+                width="auto"
+                tickMargin={10}
+                tickSize={0}
+                tick={{ fontSize: 13 }}
                 tickCount={5}
               />
               <ReferenceLine y={0} stroke="#9fae94" strokeDasharray="4 4" />

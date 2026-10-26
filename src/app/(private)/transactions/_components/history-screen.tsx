@@ -1,12 +1,9 @@
 "use client";
 
-import { PageHeading, PageActions } from "@/app/(private)/_components/finance-layout";
+import { PageHeading } from "@/app/(private)/_components/finance-layout";
 
-import { useState } from "react";
 import { categoryLabels, transactionCategories } from "@schemas/transaction/category";
 import {
-  ArrowDownLeft,
-  ArrowUpRight,
   ChevronLeft,
   ChevronRight,
   Search,
@@ -21,9 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/app/_components/ui/select";
-import { toast } from "@/app/_components/ui/toast";
 import { ActivityTable } from "../../_components/activity-table";
-import { FinanceDialog } from "../../_components/finance-dialog";
 import { MonthPicker } from "../../_components/month-picker";
 import { DataSkeleton } from "../../_components/data-skeleton";
 import { useFinanceRefresh } from "../../_components/refresh-context";
@@ -54,7 +49,6 @@ export function HistoryScreen({
   today: string;
 }) {
   const { busy, navigate } = useFinanceRefresh();
-  const [mode, setMode] = useState<"income" | "expense" | null>(null);
   function update(patch: Partial<HistoryFilters>) {
     const next = { ...filters, page: 1, ...patch };
     const query = new URLSearchParams({
@@ -75,27 +69,8 @@ export function HistoryScreen({
           <p>Histórico de entradas, saídas e ajustes</p>
         </div>
       </PageHeading>
-      <PageActions>
-        <MonthPicker
-          value={filters.month}
-          today={today}
-          onChange={(month) => update({ month })}
-        />
-        <Button
-          variant="outline"
-          onClick={() => setMode("income")}
-          disabled={busy}
-        >
-          <ArrowDownLeft aria-hidden="true" />
-          Adicionar entrada
-        </Button>
-        <Button onClick={() => setMode("expense")} disabled={busy}>
-          <ArrowUpRight aria-hidden="true" />
-          Adicionar saída
-        </Button>
-      </PageActions>
-      <section className="finance-panel overflow-hidden rounded-2xl border bg-white history-panel [&_.skeleton-table]:rounded-none [&_.skeleton-table]:border-0 [&_.data-skeleton]:min-h-[400px]">
-        <div className="history-toolbar grid grid-cols-[minmax(0,1fr)_200px_220px] max-[1150px]:grid-cols-2 max-[1150px]:[&>.filter-search-field]:col-span-full items-end gap-5 px-6 py-[22px] max-[700px]:grid-cols-1 max-[700px]:gap-4 max-[700px]:p-[18px] [&_[data-slot=select-trigger]]:h-11 [&_[data-slot=select-trigger]]:min-h-11 [&_[data-slot=select-trigger]]:rounded-[10px] [&_[data-slot=select-trigger]]:border-[#c9d3c0] [&_[data-slot=select-trigger]]:px-3 [&_[data-slot=select-trigger]]:py-2.5 [&_[data-slot=select-trigger]]:text-[15px] [&_[data-slot=select-trigger]]:shadow-[0_1px_2px_#29433306]">
+      <section className="finance-panel @container/history overflow-hidden rounded-2xl border bg-white history-panel [&_.skeleton-table]:rounded-none [&_.skeleton-table]:border-0 [&_.data-skeleton]:min-h-[400px]">
+        <div className="history-toolbar grid grid-cols-1 items-end gap-5 px-6 py-[22px] @min-[540px]/history:grid-cols-2 @min-[540px]/history:[&>.filter-search-field]:col-span-full @min-[740px]/history:grid-cols-[minmax(0,1fr)_200px_220px] @min-[1000px]/history:grid-cols-[minmax(0,1fr)_195px_200px_220px] @min-[1000px]/history:[&>.filter-search-field]:col-span-1 max-[700px]:gap-4 max-[700px]:p-[18px] [&_[data-slot=select-trigger]]:h-11 [&_[data-slot=select-trigger]]:min-h-11 [&_[data-slot=select-trigger]]:rounded-[10px] [&_[data-slot=select-trigger]]:border-[#c9d3c0] [&_[data-slot=select-trigger]]:px-3 [&_[data-slot=select-trigger]]:py-2.5 [&_[data-slot=select-trigger]]:text-[15px] [&_[data-slot=select-trigger]]:shadow-[0_1px_2px_#29433306] [&_.period-trigger]:w-full [&_.period-trigger]:min-w-0 [&_.period-trigger]:rounded-[10px] [&_.period-trigger]:text-[15px]!">
           <div className="filter-field flex min-w-0 flex-col gap-2 [&>label]:text-sm [&>label]:leading-normal [&>label]:font-medium [&>label]:text-[#425b38] [&>span]:text-sm [&>span]:leading-normal [&>span]:font-medium [&>span]:text-[#425b38] filter-search-field">
             <label htmlFor="history-search">Descrição</label>
             <form
@@ -124,6 +99,14 @@ export function HistoryScreen({
                 <span className="search-button-label">Buscar</span>
               </Button>
             </form>
+          </div>
+          <div className="filter-field filter-period-field flex min-w-0 flex-col gap-2 [&>span]:text-sm [&>span]:leading-normal [&>span]:font-medium [&>span]:text-[#425b38]">
+            <span>Período</span>
+            <MonthPicker
+              value={filters.month}
+              today={today}
+              onChange={(month) => update({ month })}
+            />
           </div>
           <div className="filter-field flex min-w-0 flex-col gap-2 [&>label]:text-sm [&>label]:leading-normal [&>label]:font-medium [&>label]:text-[#425b38] [&>span]:text-sm [&>span]:leading-normal [&>span]:font-medium [&>span]:text-[#425b38] filter-type-field">
             <label htmlFor="history-type">Tipo de movimentação</label>
@@ -222,22 +205,6 @@ export function HistoryScreen({
           </div>
         </div>
       </section>
-      {mode && (
-        <FinanceDialog
-          mode={mode}
-          today={today}
-          balance={data.account.balance}
-          version={data.account.version}
-          onClose={() => setMode(null)}
-          onSuccess={() => {
-            toast.add({
-              title: mode === "income" ? "Entrada salva" : "Saída salva",
-              type: "success",
-            });
-            setMode(null);
-          }}
-        />
-      )}
     </div>
   );
 }

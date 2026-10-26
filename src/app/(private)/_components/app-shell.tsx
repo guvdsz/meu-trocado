@@ -3,7 +3,7 @@
 import { useState, type ComponentProps } from "react";
 import { usePathname } from "next/navigation";
 import { NavigationLink as Link } from "./navigation-link";
-import { NavigationSkeleton } from "./navigation-skeleton";
+import { PageSkeleton } from "./data-skeleton";
 import { useAuth, useClerk } from "@clerk/nextjs";
 import {
   ChevronDown,
@@ -194,7 +194,7 @@ function AppShellContent({
             <span className="topbar-brand ml-auto text-sm font-normal text-[#5e6e56] max-[800px]:hidden">Meu Trocado</span>
           </header>
           <main id="main-content" tabIndex={-1} className="finance-content mx-auto max-w-[1440px] px-10 pt-[38px] pb-12 outline-none max-[1150px]:px-7 max-[1150px]:py-[30px] max-[800px]:px-[22px] max-[800px]:py-7 max-[650px]:px-4 max-[650px]:pt-[26px] max-[650px]:pb-9">
-            {navigationPath ? <NavigationSkeleton path={navigationPath} /> : children}
+            {navigationPath ? <PageSkeleton /> : children}
           </main>
         </div>
       </div>

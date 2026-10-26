@@ -11,12 +11,12 @@ test("top 5 mantém número compacto, descrição e categoria separados e valor 
     await row.scrollIntoViewIfNeeded();
     const rank = await row.locator(".expense-rank").boundingBox();
     const description = await row
-      .locator(".top-expense-details > strong")
+      .locator(".top-expense-heading > strong:first-child")
       .boundingBox();
     const metadata = await row
       .locator(".top-expense-details > span")
       .boundingBox();
-    const amount = await row.locator(":scope > strong").boundingBox();
+    const amount = await row.locator(width <= 650 ? ".top-expense-mobile-amount" : ":scope > strong").boundingBox();
     expect(rank!.width).toBeLessThan(80);
     expect(rank!.width).toBeCloseTo(rank!.height, 0);
     expect(rank!.y).toBe(description!.y);
@@ -25,6 +25,10 @@ test("top 5 mantém número compacto, descrição e categoria separados e valor 
       description!.y + description!.height,
     );
     expect(amount!.x + amount!.width).toBeLessThanOrEqual(width);
+    if (width <= 650) {
+      expect(amount!.x).toBeGreaterThanOrEqual(description!.x + description!.width);
+      expect(amount!.y).toBeLessThan(description!.y + description!.height);
+    }
     if (width >= 1440) {
       expect(amount!.x).toBeGreaterThanOrEqual(
         description!.x + description!.width,
@@ -112,6 +116,17 @@ test("gráficos e análises cabem em telas pequenas e possuem estados vazios", a
     await page.setViewportSize({ width, height: 1000 });
     await page.goto("/");
     await expect(page.locator("[data-slot=chart]")).toHaveCount(3);
+    if (width <= 650) {
+      const cards = await page.locator(".finance-summary > section").all();
+      const summary = await page.locator(".finance-summary").boundingBox();
+      let previousBottom = 0;
+      for (const card of cards) {
+        const box = await card.boundingBox();
+        expect(box!.width).toBeCloseTo(summary!.width, 0);
+        expect(box!.y).toBeGreaterThan(previousBottom);
+        previousBottom = box!.y + box!.height;
+      }
+    }
     const iconBox = await page
       .locator(".latest-activity .ledger-icon")
       .boundingBox();
@@ -149,6 +164,31 @@ test("gráficos e análises cabem em telas pequenas e possuem estados vazios", a
   await expect(page.locator(".top-expenses")).toContainText(
     "Suas maiores despesas aparecerão aqui.",
   );
+});
+
+test("eixos monetários acomodam milhares, milhões e valores negativos sem cortar os rótulos", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 1000 });
+  for (const amount of ["2500.55", "123456789.10", "999999999999.99"]) {
+    await page.goto(`/?chartAmount=${amount}`);
+    for (const chart of await page.locator(".finance-chart").all().then(charts => charts.slice(0, 2))) {
+      await chart.scrollIntoViewIfNeeded();
+      const svg = chart.locator("svg.recharts-surface");
+      const bounds = await svg.boundingBox();
+      const ticks = chart.locator(".recharts-yAxis-tick-labels text");
+      await expect(ticks.first()).toBeVisible();
+      const boxes = await ticks.evaluateAll(nodes => nodes.map(node => {
+        const box = node.getBoundingClientRect();
+        return { left: box.left, right: box.right, top: box.top, bottom: box.bottom };
+      }));
+      for (const box of boxes) {
+        expect(box.left).toBeGreaterThanOrEqual(bounds!.x + 8);
+        expect(box.right).toBeLessThan(bounds!.x + bounds!.width);
+        expect(box.top).toBeGreaterThanOrEqual(bounds!.y);
+        expect(box.bottom).toBeLessThanOrEqual(bounds!.y + bounds!.height);
+        expect(box.right).toBeCloseTo(boxes[0].right, 0);
+      }
+    }
+  }
 });
 
 test("estado genérico de erro tem card acessível e tenta novamente nas duas telas", async ({

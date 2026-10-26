@@ -1,6 +1,6 @@
 "use client";
 
-import { useFinancialFormat } from "@/app/(private)/_components/preferences-context";
+import { useFinancialFormat, usePreferences } from "@/app/(private)/_components/preferences-context";
 
 import { categoryLabels } from "@schemas/transaction/category";
 import { expenseShare } from "@/lib/financial-analysis";
@@ -10,6 +10,7 @@ import { IconText } from "@/app/_components/shared/icon-text";
 
 export function MonthlyAnalysis({ data }: { data: DashboardData }) {
   const { formatMoney, formatDay } = useFinancialFormat();
+  const { locale } = usePreferences();
   const leading = data.categories[0];
   const largest = data.topExpenses[0];
   const change = toCents(data.expense) - toCents(data.previousExpense);
@@ -86,13 +87,27 @@ export function MonthlyAnalysis({ data }: { data: DashboardData }) {
                     </span>
                   }
                 >
-                  <strong>{expense.description}</strong>
+                  <div className="top-expense-heading flex min-w-0 items-baseline gap-2">
+                    <strong className="min-w-0 text-sm!">{expense.description}</strong>
+                    <strong className="top-expense-mobile-amount shrink-0 whitespace-nowrap text-sm! tabular-nums min-[651px]:hidden">
+                      {formatMoney(expense.amount)}
+                    </strong>
+                  </div>
                   <span>
                     {categoryLabels[expense.category]} ·{" "}
-                    <time dateTime={expense.day}>{formatDay(expense.day)}</time>
+                    <time dateTime={expense.day} title={formatDay(expense.day)}>
+                      <span className="max-[650px]:hidden">{formatDay(expense.day)}</span>
+                      <span className="min-[651px]:hidden">
+                        {new Date(`${expense.day}T12:00:00Z`).toLocaleDateString(locale, {
+                          day: "numeric",
+                          month: "short",
+                          timeZone: "UTC",
+                        })}
+                      </span>
+                    </time>
                   </span>
                 </IconText>
-                <strong>{formatMoney(expense.amount)}</strong>
+                <strong className="max-[650px]:hidden">{formatMoney(expense.amount)}</strong>
               </li>
             ))}
           </ol>

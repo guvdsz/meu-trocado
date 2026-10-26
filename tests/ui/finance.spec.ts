@@ -279,19 +279,19 @@ test("loader animado respeita preferência de movimento reduzido", async ({
   ).toBe("none");
 });
 
-test("cabeçalho e filtros mantêm a posição entre o skeleton e o histórico", async ({
+test("skeleton cobre o conteúdo inteiro antes de mostrar o histórico", async ({
   page,
 }) => {
   await page.goto("/transactions?loading=1");
   await expect(page.locator(".data-skeleton")).toHaveCount(1);
-  const before = await page.locator(".history-toolbar").boundingBox();
-  const actionsBefore = await page.locator(".finance-actions").boundingBox();
+  await expect(page.locator(".page-skeleton")).toBeVisible();
+  await expect(page.locator("#main-content h1")).toHaveCount(0);
+  await expect(page.locator(".history-toolbar")).toHaveCount(0);
+  await expect(page.locator(".history-panel")).toHaveCount(0);
   await page.goto("/transactions");
-  const after = await page.locator(".history-toolbar").boundingBox();
-  const actionsAfter = await page.locator(".finance-actions").boundingBox();
-  expect(Math.abs(before!.y - after!.y)).toBeLessThan(1);
-  expect(Math.abs(before!.height - after!.height)).toBeLessThan(1);
-  expect(Math.abs(actionsBefore!.y - actionsAfter!.y)).toBeLessThan(1);
+  await expect(page.locator(".page-skeleton")).toHaveCount(0);
+  await expect(page.locator(".history-toolbar")).toBeVisible();
+  await expect(page.locator(".ledger-table")).toBeVisible();
 });
 
 test("descrições e valores cabem nas telas menores sem rolagem lateral", async ({

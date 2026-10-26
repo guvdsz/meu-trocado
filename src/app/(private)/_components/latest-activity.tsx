@@ -1,12 +1,11 @@
 "use client";
 
-import { useFinancialFormat } from "@/app/(private)/_components/preferences-context";
+import { useFinancialFormat, usePreferences } from "@/app/(private)/_components/preferences-context";
 
 import {
     ArrowDownLeft,
     ArrowUpRight,
     SlidersHorizontal,
-    Wallet,
 } from "lucide-react";
 import { categoryLabels } from "@schemas/transaction/category";
 import { toCents } from "@/lib/financial";
@@ -15,6 +14,7 @@ import { IconText } from "@/app/_components/shared/icon-text";
 
 export function LatestActivity({ activity }: { activity: Activity | null }) {
     const { formatMoney, formatDay } = useFinancialFormat();
+    const { locale } = usePreferences();
     if (!activity)
         return (
             <div className="latest-activity latest-activity-empty flex flex-1 items-end px-6 pt-3 pb-6 text-muted-foreground max-[650px]:px-[18px] max-[650px]:pt-2 max-[650px]:pb-5">
@@ -54,7 +54,12 @@ export function LatestActivity({ activity }: { activity: Activity | null }) {
                     </span>
                 }
             >
-                <h3>{activity.description}</h3>
+                <div className="latest-activity-heading mb-[5px] flex min-w-0 items-baseline gap-2 [&_h3]:mb-0!">
+                    <h3 className="min-w-0 max-[650px]:truncate" title={activity.description}>{activity.description}</h3>
+                    <strong className={`latest-activity-mobile-amount shrink-0 whitespace-nowrap text-[17px] font-semibold tabular-nums min-[651px]:hidden ${activity.type === "expense" ? "text-[#a05236]" : ""}`}>
+                        {value}
+                    </strong>
+                </div>
                 <p>
                     {type}
                     {activity.category
@@ -62,9 +67,21 @@ export function LatestActivity({ activity }: { activity: Activity | null }) {
                         : ""}
                     {activity.recurrenceId ? " · Recorrente" : ""}
                 </p>
-                <time dateTime={activity.day}>{formatDay(activity.day)}</time>
+                <time dateTime={activity.day} title={formatDay(activity.day)}>
+                    <span className="max-[650px]:hidden">{formatDay(activity.day)}</span>
+                    <span className="min-[651px]:hidden">
+                        {new Date(`${activity.day}T12:00:00Z`).toLocaleDateString(locale, {
+                            day: "numeric",
+                            month: "short",
+                            timeZone: "UTC",
+                        })}
+                    </span>
+                </time>
+                {activity.newBalance !== null && (
+                    <p className="min-[651px]:hidden">Novo saldo: {formatMoney(activity.newBalance)}</p>
+                )}
             </IconText>
-            <div className="latest-activity-value grid min-w-0 gap-1.5 text-right wrap-anywhere tabular-nums [&>strong]:text-xl [&>strong]:font-semibold [&>span]:text-sm [&>span]:text-muted-foreground max-[1100px]:pl-0 max-[1100px]:text-left">
+            <div className="latest-activity-value grid min-w-0 gap-1.5 text-right wrap-anywhere tabular-nums [&>strong]:text-xl [&>strong]:font-semibold [&>span]:text-sm [&>span]:text-muted-foreground max-[1100px]:pl-0 max-[1100px]:text-left max-[650px]:hidden">
                 <strong>{value}</strong>
                 {activity.newBalance !== null && (
                     <span>Novo saldo: {formatMoney(activity.newBalance)}</span>
