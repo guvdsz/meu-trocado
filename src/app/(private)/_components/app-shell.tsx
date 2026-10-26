@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ComponentProps } from "react";
 import { usePathname } from "next/navigation";
-import Link from "next/link";
+import { NavigationLink as Link } from "./navigation-link";
+import { NavigationSkeleton } from "./navigation-skeleton";
 import { useClerk } from "@clerk/nextjs";
 import {
   ChevronDown,
@@ -29,7 +30,7 @@ import {
   SheetTrigger,
 } from "@/app/_components/ui/sheet";
 import { toast } from "@/app/_components/ui/toast";
-import { RefreshProvider } from "./refresh-context";
+import { RefreshProvider, useFinanceRefresh } from "./refresh-context";
 
 function UserMenu({ name, email }: { name: string; email: string }) {
   const clerk = useClerk();
@@ -92,7 +93,7 @@ function UserMenu({ name, email }: { name: string; email: string }) {
   );
 }
 
-export function AppShell({
+function AppShellContent({
   children,
   name,
   email,
@@ -101,7 +102,9 @@ export function AppShell({
   name: string;
   email: string;
 }) {
-  const pathname = usePathname();
+  const actualPathname = usePathname();
+  const { navigationPath } = useFinanceRefresh();
+  const pathname = navigationPath ?? actualPathname;
   const [mobileOpen, setMobileOpen] = useState(false);
   const isHistory = pathname.startsWith("/transactions");
   const isSettings = pathname.startsWith("/settings");
@@ -145,7 +148,6 @@ export function AppShell({
     </>
   );
   return (
-    <RefreshProvider>
       <div className="finance-shell flex min-h-svh">
         <a className="skip-link fixed top-3 left-3 z-[1000] -translate-y-[180%] rounded-[10px] bg-primary px-5 py-3.5 text-white focus:translate-y-0" href="#main-content">
           Pular para o conteúdo
@@ -186,10 +188,13 @@ export function AppShell({
             <span className="topbar-brand ml-auto text-sm font-normal text-[#5e6e56] max-[800px]:hidden">Meu Trocado</span>
           </header>
           <main id="main-content" tabIndex={-1} className="finance-content mx-auto max-w-[1440px] px-10 pt-[38px] pb-12 outline-none max-[1150px]:px-7 max-[1150px]:py-[30px] max-[800px]:px-[22px] max-[800px]:py-7 max-[650px]:px-4 max-[650px]:pt-[26px] max-[650px]:pb-9">
-            {children}
+            {navigationPath ? <NavigationSkeleton path={navigationPath} /> : children}
           </main>
         </div>
       </div>
-    </RefreshProvider>
   );
+}
+
+export function AppShell(props: ComponentProps<typeof AppShellContent>) {
+  return <RefreshProvider><AppShellContent {...props} /></RefreshProvider>;
 }

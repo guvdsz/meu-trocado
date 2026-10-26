@@ -15,9 +15,17 @@ async function hasFinancialData(db: Database, account: typeof accounts.$inferSel
   return false;
 }
 
-export async function readSettings(db: Database, userId: string) {
-  await db.insert(accounts).values({ userId }).onConflictDoNothing();
-  const [account] = await db.select().from(accounts).where(eq(accounts.userId, userId));
+export async function readSettings(db: Database, userId: string, providedAccount?: typeof accounts.$inferSelect) {
+  let account = providedAccount;
+  if (!account) {
+    const [existing] = await db.select().from(accounts).where(eq(accounts.userId, userId));
+    account = existing;
+    if (!account) {
+      [account] = await db.insert(accounts).values({ userId }).onConflictDoNothing().returning();
+      if (!account) [account] = await db.select().from(accounts).where(eq(accounts.userId, userId));
+    }
+  }
+  if (!account) throw new PreferencesConflict();
   return { ...accountPreferences(account), hasFinancialData: account.currency === null && await hasFinancialData(db, account) };
 }
 

@@ -7,14 +7,14 @@ import {
   endRecurrenceSchema,
   updateRecurrenceSchema,
 } from "@schemas/recurrence/manage";
-import { IdentityError, requireUser } from "@/lib/auth";
+import { IdentityError, requireIdentity } from "@/lib/auth";
 import { manageRecurringExpense } from "@/db/mutations/recurrences";
 import { FinanceConflict } from "@/db/mutations/finance";
 import type { ActionResult } from "@/lib/action-result";
 
 async function manage(payload: unknown, end: boolean): Promise<ActionResult> {
   try {
-    const identity = await requireUser();
+    const identity = await requireIdentity();
     if (end) {
       const input = endRecurrenceSchema.safeParse(payload);
       if (!input.success)

@@ -1,24 +1,32 @@
 import "server-only";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { cache } from "react";
-import { withDatabase } from "@/db";
+import { httpDatabase } from "@/db/http";
 import { resolveUser } from "@/db/queries/users";
 
 export class IdentityError extends Error {}
 
-export const requireUser = cache(async () => {
+export const requireIdentity = cache(async () => {
   const session = await auth();
   if (!session.userId)
     throw new IdentityError("Entre na sua conta para continuar.");
-  const user = await currentUser();
+  const [localUser] = await resolveUser(httpDatabase(), session.userId);
+  return { userId: localUser.id };
+});
+
+export const requireUser = cache(async () => {
+  const [identity, user, session] = await Promise.all([
+    requireIdentity(),
+    currentUser(),
+    auth(),
+  ]);
   if (!user || user.id !== session.userId)
     throw new IdentityError("Sua sessão expirou. Entre novamente.");
-  const [localUser] = await withDatabase((db) => resolveUser(db, user.id));
   return {
-    userId: localUser.id,
+    ...identity,
     name: user.firstName ?? "por aqui",
     email: user.primaryEmailAddress?.emailAddress ?? "",
   };
 });
 
-export type UserIdentity = Awaited<ReturnType<typeof requireUser>>;
+export type UserIdentity = Awaited<ReturnType<typeof requireIdentity>>;

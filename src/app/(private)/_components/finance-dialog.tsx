@@ -90,7 +90,7 @@ function TransactionForm({
   close: () => void;
 }) {
   const preferences = usePreferences();
-  const { setMutating } = useFinanceRefresh();
+  const { setMutating, runMutation } = useFinanceRefresh();
   const [requestId] = useState(() => crypto.randomUUID());
   const form = useForm<CreateTransactionInput, unknown, CreateTransactionData>({
     resolver: zodResolver(createTransactionSchema),
@@ -109,7 +109,7 @@ function TransactionForm({
   const repeating = useWatch({ control: form.control, name: "repeat" }) !== "none";
   return (
     <FormLayout
-      onSubmit={form.handleSubmit(async (values) => {
+      onSubmit={form.handleSubmit((values) => runMutation(async () => {
         form.clearErrors();
         setMutating(true);
         const result = await submitSafely(() =>
@@ -126,7 +126,7 @@ function TransactionForm({
               message: messages[0],
             });
         }
-      })}
+      }))}
 
       noValidate
     >
@@ -328,7 +328,7 @@ function BalanceForm({
   close: () => void;
 }) {
   const preferences = usePreferences();
-  const { setMutating, refresh } = useFinanceRefresh();
+  const { setMutating, refresh, runMutation } = useFinanceRefresh();
   const [requestId] = useState(() => crypto.randomUUID());
   const [conflict, setConflict] = useState(false);
   const form = useForm<AdjustBalanceInput, unknown, AdjustBalanceData>({
@@ -338,7 +338,7 @@ function BalanceForm({
   const { errors, isSubmitting } = form.formState;
   return (
     <FormLayout
-      onSubmit={form.handleSubmit(async (values) => {
+      onSubmit={form.handleSubmit((values) => runMutation(async () => {
         form.clearErrors();
         setMutating(true);
         const result = await submitSafely(() => adjustBalanceAction(values));
@@ -357,7 +357,7 @@ function BalanceForm({
               message: messages[0],
             });
         }
-      })}
+      }))}
 
       noValidate
     >

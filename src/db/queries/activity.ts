@@ -1,6 +1,7 @@
 import { requireConfigured, accountPreferences } from "@/lib/preferences";
 import { and, count, desc, eq, gte, lt, sql } from "drizzle-orm";
 import type { Database } from "../types";
+import { readSnapshot } from "../snapshot";
 import { accounts, balanceAdjustments, transactions } from "../schema";
 import { monthBounds } from "@/lib/financial";
 import {
@@ -10,7 +11,10 @@ import {
 } from "./financial-types";
 
 export function activityQuery(db: Database, accountId: string, userId: string) {
-  const zone = db.select({ value: accounts.timeZone }).from(accounts).where(and(eq(accounts.id, accountId), eq(accounts.userId, userId)));
+  const zone = db
+    .select({ value: accounts.timeZone })
+    .from(accounts)
+    .where(and(eq(accounts.id, accountId), eq(accounts.userId, userId)));
   const entries = db
     .select({
       id: transactions.id,
@@ -75,46 +79,50 @@ export function activityFields(activity: ReturnType<typeof activityQuery>) {
   };
 }
 
-export function readHistory(
+export async function readHistory(
   db: Database,
   accountId: string,
   userId: string,
   filters: HistoryFilters,
 ) {
-  return db.transaction(
-    async (tx) => {
-      const [account] = await tx
-        .select()
-        .from(accounts)
-        .where(and(eq(accounts.id, accountId), eq(accounts.userId, userId)));
-      requireConfigured(account);
-      const activity = activityQuery(tx, accountId, userId);
-      const { start, end } = monthBounds(filters.month);
-      const where = and(
-        gte(activity.day, start),
-        lt(activity.day, end),
-        filters.type === "all" ? undefined : eq(activity.type, filters.type),
-        filters.category === "all" ? undefined : eq(activity.category, filters.category),
-        // Literal substring search: '%' and '_' are not wildcard characters.
-        sql`position(lower(${filters.query}) in lower(${activity.description})) > 0`,
-      );
-      const [totals] = await tx
-        .select({ total: count() })
-        .from(activity)
-        .where(where);
-      const rows = await tx
-        .select(activityFields(activity))
-        .from(activity)
-        .where(where)
-        .orderBy(
-          desc(activity.day),
-          desc(activity.createdAt),
-          desc(activity.id),
-        )
-        .limit(HISTORY_PAGE_SIZE)
-        .offset((filters.page - 1) * HISTORY_PAGE_SIZE);
-      return { total: totals.total, activity: rows, account: { balance: account.balance, version: account.version, ...accountPreferences(account) } };
+  const [[account], [totals], rows] = await readSnapshot(db, (tx) => {
+    const accountQuery = tx
+      .select()
+      .from(accounts)
+      .where(and(eq(accounts.id, accountId), eq(accounts.userId, userId)));
+    const activity = activityQuery(tx, accountId, userId);
+    const { start, end } = monthBounds(filters.month);
+    const where = and(
+      gte(activity.day, start),
+      lt(activity.day, end),
+      filters.type === "all" ? undefined : eq(activity.type, filters.type),
+      filters.category === "all"
+        ? undefined
+        : eq(activity.category, filters.category),
+      // Literal substring search: '%' and '_' are not wildcard characters.
+      sql`position(lower(${filters.query}) in lower(${activity.description})) > 0`,
+    );
+    const totalsQuery = tx
+      .select({ total: count() })
+      .from(activity)
+      .where(where);
+    const rowsQuery = tx
+      .select(activityFields(activity))
+      .from(activity)
+      .where(where)
+      .orderBy(desc(activity.day), desc(activity.createdAt), desc(activity.id))
+      .limit(HISTORY_PAGE_SIZE)
+      .offset((filters.page - 1) * HISTORY_PAGE_SIZE);
+    return [accountQuery, totalsQuery, rowsQuery] as const;
+  });
+  requireConfigured(account);
+  return {
+    total: totals.total,
+    activity: rows,
+    account: {
+      balance: account.balance,
+      version: account.version,
+      ...accountPreferences(account),
     },
-    { isolationLevel: "repeatable read", accessMode: "read only" },
-  );
+  };
 }

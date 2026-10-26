@@ -2,7 +2,7 @@ import { PreferencesProvider } from "@/app/(private)/_components/preferences-con
 import { getPreferences } from "@/db/queries/settings";
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
-import { requireUser } from "@/lib/auth";
+import { requireIdentity } from "@/lib/auth";
 import { localToday, resolveMonth } from "@/lib/financial";
 import { historyFiltersSchema } from "@schemas/transaction/history-filters";
 import { getHistory } from "@/db/queries/history";
@@ -25,7 +25,7 @@ async function HistoryContent({ searchParams }: { searchParams: Search }) {
     }),
     month: resolveMonth(params.month, today),
   };
-  const identity = await requireUser();
+  const identity = await requireIdentity();
   const data = await getHistory(identity, filters);
   const lastPage = Math.max(1, Math.ceil(data.total / HISTORY_PAGE_SIZE));
   if (filters.page > lastPage) {

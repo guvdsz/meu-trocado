@@ -1,14 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireUser } from "@/lib/auth";
+import { requireIdentity } from "@/lib/auth";
 import { withDatabase } from "@/db";
 import { saveSettings } from "@/db/mutations/settings";
 import { settingsSchema } from "@schemas/settings/account-settings";
 import { PreferencesConflict } from "@/lib/preferences";
 
 export async function saveSettingsAction(payload: unknown) {
-  const identity = await requireUser();
+  const identity = await requireIdentity();
   const parsed = settingsSchema.safeParse(payload);
   if (!parsed.success) return { success: false, message: "Confira a moeda, o fuso e o formato selecionados." };
   try {

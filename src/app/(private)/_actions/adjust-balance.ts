@@ -5,7 +5,7 @@ import { PreferencesConflict } from "@/lib/preferences";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { adjustBalanceSchema } from "@schemas/account/adjust-balance";
-import { IdentityError, requireUser } from "@/lib/auth";
+import { IdentityError, requireIdentity } from "@/lib/auth";
 import { adjustBalance, FinanceConflict } from "@/db/mutations/finance";
 import type { ActionResult } from "@/lib/action-result";
 
@@ -13,7 +13,7 @@ export async function adjustBalanceAction(
   payload: unknown,
 ): Promise<ActionResult> {
   try {
-    const identity = await requireUser();
+    const identity = await requireIdentity();
     const parsed = adjustBalanceSchema.safeParse(payload);
     if (!parsed.success)
       return {

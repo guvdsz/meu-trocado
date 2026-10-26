@@ -5,7 +5,7 @@ import { useFinancialFormat } from "@/app/(private)/_components/preferences-cont
 import { PageHeading, PageActions, SummaryGrid, OverviewGrid, AnalysisGrid } from "@/app/(private)/_components/finance-layout";
 
 import { useState } from "react";
-import Link from "next/link";
+import { NavigationLink as Link } from "./navigation-link";
 import {
   ArrowDownLeft,
   ArrowUpRight,

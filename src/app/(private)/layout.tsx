@@ -11,9 +11,8 @@ async function ProtectedContent({ children }: { children: React.ReactNode }) {
   const { userId } = await auth();
   if (!userId) redirect("/auth/sign-in");
   await auth.protect();
-  const user = await currentUser();
+  const [user, preferences] = await Promise.all([currentUser(), getPreferences()]);
   if (!user) redirect("/auth/sign-in");
-  const preferences = await getPreferences();
   return (
     <PreferencesProvider preferences={preferences} key={preferences.settingsVersion}><AppShell
       name={user.firstName ?? "Minha conta"}

@@ -47,10 +47,10 @@ export async function createTransaction(
       }
       return true;
     };
-    await getAccount(db, identity, input.expectedSettingsVersion);
+    let account = await getAccount(db, identity, input.expectedSettingsVersion);
     if (await findExisting()) return;
     for (let attempt = 0; attempt < 3; attempt++) {
-      const account = await getAccount(db, identity, input.expectedSettingsVersion);
+      if (attempt > 0) account = await getAccount(db, identity, input.expectedSettingsVersion);
       try {
         const rows = await insertTransaction(db, account, input);
         if (rows.length) return;
@@ -95,9 +95,8 @@ export async function adjustBalance(
       }
       return true;
     };
-    await getAccount(db, identity, input.expectedSettingsVersion);
-    if (await findExisting()) return;
     const account = await getAccount(db, identity, input.expectedSettingsVersion);
+    if (await findExisting()) return;
     if (account.version !== input.expectedVersion)
       throw new FinanceConflict(
         "Seu saldo mudou. Atualize a página e confira o valor antes de ajustar.",

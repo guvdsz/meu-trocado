@@ -73,7 +73,7 @@ function ManageDialog({
 }) {
     const { formatMoney, formatDay } = useFinancialFormat();
     const preferences = usePreferences();
-    const { setMutating, refresh } = useFinanceRefresh();
+    const { setMutating, refresh, runMutation } = useFinanceRefresh();
     const [conflict, setConflict] = useState(false);
     const form = useForm<UpdateRecurrenceInput, unknown, UpdateRecurrenceData>({
         resolver: zodResolver(updateRecurrenceSchema),
@@ -117,7 +117,7 @@ function ManageDialog({
                 </DialogHeader>
                 <FormLayout
                     noValidate
-                    onSubmit={form.handleSubmit(async (values) => {
+                    onSubmit={form.handleSubmit((values) => runMutation(async () => {
                         setMutating(true);
                         form.clearErrors();
                         try {
@@ -132,7 +132,6 @@ function ManageDialog({
                                     type: "success",
                                 });
                                 close();
-                                refresh();
                             } else {
                                 form.setError("root", {
                                     message: result.message,
@@ -150,7 +149,7 @@ function ManageDialog({
                         } finally {
                             setMutating(false);
                         }
-                    })}
+                    }))}
                 >
                     {end ? (
                         <p>
@@ -320,7 +319,7 @@ export function RecurrencesScreen({
     today: string;
 }) {
     const { formatMoney, formatDay } = useFinancialFormat();
-    const { busy, refresh } = useFinanceRefresh();
+    const { busy } = useFinanceRefresh();
     const [creating, setCreating] = useState(false);
     const [selected, setSelected] = useState<{
         recurrence: RecurringExpense;
@@ -440,7 +439,6 @@ export function RecurrencesScreen({
                     onSuccess={() => {
                         setCreating(false);
                         toast.add({ title: "Saída salva", type: "success" });
-                        refresh();
                     }}
                 />
             )}
