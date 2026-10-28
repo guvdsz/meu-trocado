@@ -4,8 +4,6 @@ Aplicação de controle financeiro com Next.js, Clerk, Neon/PostgreSQL e Drizzle
 
 O dashboard em `/` reúne saldo, entradas, saídas, resumo mensal, última movimentação e ajuste manual de saldo. O histórico paginado fica em `/transactions`. As telas privadas ficam em `src/app/(private)`, protegidas pelo Clerk. O login usa e-mail e senha. Os dados financeiros são vinculados ao UUID interno de `users`, com o ID externo do Clerk somente em `users.providerId` (coluna SQL `provider_id`).
 
-A implementação e as regras de autenticação/persistência estão em [docs/dashboard.md](docs/dashboard.md). O [planejamento original](docs/planejamento-mvp.md) registra as decisões iniciais do MVP.
-
 Os formulários usam React Hook Form e Zod, com validações em `/schemas`, Server Actions nas rotas e schema Drizzle em `src/db/schema.ts`. A interface usa shadcn/Base UI e Tailwind, com calendário, popovers, navegação móvel e skeletons.
 
 Os estilos ficam nos componentes; `src/app/globals.css` contém apenas o tema, estilos base e preferências de acessibilidade. Layouts repetidos ficam em `_components/finance-layout.tsx` e `_components/ui/form-layout.tsx`, e os estados dos inputs em `_components/ui/control-styles.ts`. As classes sem utilitários, como `finance-summary`, identificam regiões nos testes e em variantes locais do Tailwind; não dependem de regras no CSS global. A personalização interna do Clerk continua na API `appearance`, e os gráficos usam estilos dinâmicos apenas para valores calculados em execução.
