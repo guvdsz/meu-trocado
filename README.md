@@ -70,5 +70,3 @@ Em **Configurações** (`/settings`), o usuário escolhe moeda, fuso IANA e form
 As movimentações continuam sem hora e exibem dia da semana, dia, mês e ano. As datas civis de entradas/saídas não mudam com o fuso. O dia atual, as datas de ajustes e o processamento de recorrências utilizam o fuso persistido. O cron diário mantém seu horário UTC e pode registrar vencimentos depois da meia-noite local; abrir o app também recupera pendências.
 
 Antes de executar esta versão, aplique **`pnpm db:migrate`** ao banco do ambiente. A migration `20261025190954_account-preferences` preserva os registros existentes e deixa a confirmação de moeda pendente. Publique aplicação e migration de forma coordenada, suspendendo escritores/cron antigos durante a transição. Não reverta para versões que formatam todos os valores como BRL depois de permitir carteiras em outras moedas.
-
-O planejamento e os critérios de aceite estão em [docs/plano-moedas-datas-configuracoes.md](docs/plano-moedas-datas-configuracoes.md). Testes adicionais de persistência e interface ficam em `tests/settings.test.ts` e `tests/ui/settings.spec.ts`.
